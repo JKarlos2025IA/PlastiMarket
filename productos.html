@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlastiMarket - Soluciones en Plástico</title>
-    <meta name="description" content="Venta de bolsas, mangas de plástico y artículos descartables al mejor precio.">
+    <title>Catálogo de Productos - PlastiMarket</title>
+    <meta name="description" content="Catálogo completo de bolsas, mangas y descartables.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -18,15 +18,15 @@
     <!-- Header -->
     <header class="header">
         <div class="container header-container">
-            <a href="#" class="logo">
+            <a href="index.html" class="logo">
                 <i class="fa-solid fa-layer-group"></i> PlastiMarket
             </a>
             <nav class="nav">
                 <ul class="nav-list">
-                    <li><a href="#inicio" class="nav-link active">Inicio</a></li>
-                    <li><a href="#productos" class="nav-link">Productos</a></li>
-                    <li><a href="#nosotros" class="nav-link">Nosotros</a></li>
-                    <li><a href="#contacto" class="nav-link">Contacto</a></li>
+                    <li><a href="index.html" class="nav-link">Inicio</a></li>
+                    <li><a href="#" class="nav-link active">Productos</a></li>
+                    <li><a href="index.html#nosotros" class="nav-link">Nosotros</a></li>
+                    <li><a href="index.html#contacto" class="nav-link">Contacto</a></li>
                 </ul>
             </nav>
             <div class="header-actions">
@@ -45,161 +45,140 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section id="inicio" class="hero">
-        <div class="hero-content">
-            <h1>Soluciones en Plástico para tu Negocio</h1>
-            <p>La mejor calidad en bolsas, mangas y descartables para industria y comercio.</p>
-            <a href="#productos" class="btn btn-primary">Ver Catálogo</a>
-        </div>
-        <div class="hero-image">
-            <img src="assets/images/hero.png" alt="Variedad de productos plásticos">
+    <!-- Page Title -->
+    <section class="bg-light section-padding" style="padding: 40px 0;">
+        <div class="container">
+            <h1 class="section-title" style="margin-bottom: 0;">Catálogo Completo</h1>
+            <p class="text-center" style="margin-top: 10px; color: #666;">Encuentra todo lo que necesitas para tu
+                negocio</p>
         </div>
     </section>
 
-    <!-- Categories -->
-    <section class="categories section-padding">
+    <!-- Products Grid -->
+    <section class="products section-padding">
         <div class="container">
-            <h2 class="section-title">Nuestras Categorías</h2>
-            <div class="categories-grid">
-                <div class="category-card">
-                    <div class="category-icon">
-                        <i class="fa-solid fa-bag-shopping"></i>
-                    </div>
-                    <h3>Bolsas Plásticas</h3>
-                    <p>Alta y baja densidad, camisetas, riñón y más.</p>
-                    <a href="productos.html" class="link-arrow">Ver más <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-                <div class="category-card">
-                    <div class="category-icon">
-                        <i class="fa-solid fa-scroll"></i>
-                    </div>
-                    <h3>Mangas Industriales</h3>
-                    <p>Mangas de polietileno para embalaje y protección.</p>
-                    <a href="productos.html" class="link-arrow">Ver más <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-                <div class="category-card">
-                    <div class="category-icon">
-                        <i class="fa-solid fa-utensils"></i>
-                    </div>
-                    <h3>Descartables</h3>
-                    <p>Envases, vasos y cubiertos para alimentos.</p>
-                    <a href="#" class="link-arrow">Ver más <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Featured Products -->
-    <section id="productos" class="products section-padding bg-light">
-        <div class="container">
-            <h2 class="section-title">Productos Destacados</h2>
             <div class="products-grid">
-                <!-- Product 1 -->
+                <!-- Product Placeholders (12 items) -->
+                <!-- Item 1 -->
                 <div class="product-card">
                     <div class="product-image">
-                        <img src="assets/images/bolsa.png" alt="Bolsas Transparentes">
-                        <span class="badge">Oferta</span>
+                        <div class="placeholder-img"
+                            style="background-color: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc;">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
                     </div>
                     <div class="product-info">
-                        <span class="product-category">Bolsas</span>
-                        <h3>Bolsas Transparentes 1kg</h3>
-                        <div class="product-price">S/ 12.00 <span class="unit">x ciento</span></div>
+                        <span class="product-category">Categoría</span>
+                        <h3>Nombre del Producto</h3>
+                        <div class="product-price">S/ 0.00</div>
                         <button class="btn btn-outline btn-sm">Añadir al Carrito</button>
                     </div>
                 </div>
-                <!-- Product 2 -->
+                <!-- Item 2 -->
                 <div class="product-card">
                     <div class="product-image">
-                        <img src="assets/images/manga.png" alt="Manga Plástica">
+                        <div class="placeholder-img"
+                            style="background-color: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc;">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
                     </div>
                     <div class="product-info">
-                        <span class="product-category">Mangas</span>
-                        <h3>Mangas y Bobinas de Plástico</h3>
-                        <div class="product-price"><small>desde</small> S/ 12.00 <span class="unit">x kilo</span></div>
+                        <span class="product-category">Categoría</span>
+                        <h3>Nombre del Producto</h3>
+                        <div class="product-price">S/ 0.00</div>
                         <button class="btn btn-outline btn-sm">Añadir al Carrito</button>
                     </div>
                 </div>
-                <!-- Product 3 -->
+                <!-- Item 3 -->
                 <div class="product-card">
                     <div class="product-image">
-                        <img src="assets/images/descartable.png" alt="Envases Térmicos">
+                        <div class="placeholder-img"
+                            style="background-color: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc;">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
                     </div>
                     <div class="product-info">
-                        <span class="product-category">Descartables</span>
-                        <h3>Envases Térmicos 1L</h3>
-                        <div class="product-price">S/ 25.00 <span class="unit">x 50 un.</span></div>
+                        <span class="product-category">Categoría</span>
+                        <h3>Nombre del Producto</h3>
+                        <div class="product-price">S/ 0.00</div>
                         <button class="btn btn-outline btn-sm">Añadir al Carrito</button>
                     </div>
                 </div>
-                <!-- Product 4 -->
+                <!-- Item 4 -->
                 <div class="product-card">
                     <div class="product-image">
-                        <img src="assets/images/bolsa.png" alt="Bolsas de Basura">
+                        <div class="placeholder-img"
+                            style="background-color: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc;">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
                     </div>
                     <div class="product-info">
-                        <span class="product-category">Bolsas</span>
-                        <h3>Bolsas de Basura Negras</h3>
-                        <div class="product-price">S/ 8.50 <span class="unit">x paquete</span></div>
+                        <span class="product-category">Categoría</span>
+                        <h3>Nombre del Producto</h3>
+                        <div class="product-price">S/ 0.00</div>
                         <button class="btn btn-outline btn-sm">Añadir al Carrito</button>
                     </div>
                 </div>
-            </div>
-            <div class="text-center mt-4">
-                <a href="#" class="btn btn-secondary">Ver Todos los Productos</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features -->
-    <section class="features section-padding">
-        <div class="container features-grid">
-            <div class="feature-item">
-                <i class="fa-solid fa-truck-fast"></i>
-                <h3>Envíos Rápidos</h3>
-                <p>Despacho en 24 horas para Lima Metropolitana.</p>
-            </div>
-            <div class="feature-item">
-                <i class="fa-solid fa-award"></i>
-                <h3>Calidad Garantizada</h3>
-                <p>Productos resistentes y de primer nivel.</p>
-            </div>
-            <div class="feature-item">
-                <i class="fa-solid fa-tags"></i>
-                <h3>Precios Mayoristas</h3>
-                <p>Descuentos especiales por volumen.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact -->
-    <section id="contacto" class="contact section-padding bg-dark text-white">
-        <div class="container contact-container">
-            <div class="contact-info">
-                <h2>Contáctanos</h2>
-                <p>¿Tienes alguna duda o necesitas una cotización especial?</p>
-                <ul class="contact-list">
-                    <li><a href="https://wa.me/51940403550" target="_blank"
-                            style="display: flex; align-items: center; gap: 15px;"><i class="fa-brands fa-whatsapp"
-                                style="font-size: 1.2rem; color: #25D366;"></i> 940-403-550</a></li>
-                    <li><i class="fa-solid fa-envelope"></i> ventas@plastimarket.pe</li>
-                    <li><i class="fa-solid fa-location-dot"></i> Av. General Borgoño N° 120, Pueblo Libre, Lima
-                        (oficina)</li>
-                </ul>
-            </div>
-            <div class="contact-form-wrapper">
-                <form class="contact-form">
-                    <div class="form-group">
-                        <input type="text" placeholder="Nombre" required>
+                <!-- Item 5 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="placeholder-img"
+                            style="background-color: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc;">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <input type="email" placeholder="Correo Electrónico" required>
+                    <div class="product-info">
+                        <span class="product-category">Categoría</span>
+                        <h3>Nombre del Producto</h3>
+                        <div class="product-price">S/ 0.00</div>
+                        <button class="btn btn-outline btn-sm">Añadir al Carrito</button>
                     </div>
-                    <div class="form-group">
-                        <textarea placeholder="Mensaje" rows="4" required></textarea>
+                </div>
+                <!-- Item 6 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="placeholder-img"
+                            style="background-color: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc;">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Enviar Mensaje</button>
-                </form>
+                    <div class="product-info">
+                        <span class="product-category">Categoría</span>
+                        <h3>Nombre del Producto</h3>
+                        <div class="product-price">S/ 0.00</div>
+                        <button class="btn btn-outline btn-sm">Añadir al Carrito</button>
+                    </div>
+                </div>
+                <!-- Item 7 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="placeholder-img"
+                            style="background-color: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc;">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">Categoría</span>
+                        <h3>Nombre del Producto</h3>
+                        <div class="product-price">S/ 0.00</div>
+                        <button class="btn btn-outline btn-sm">Añadir al Carrito</button>
+                    </div>
+                </div>
+                <!-- Item 8 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <div class="placeholder-img"
+                            style="background-color: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; color: #ccc;">
+                            <i class="fa-solid fa-image fa-3x"></i>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">Categoría</span>
+                        <h3>Nombre del Producto</h3>
+                        <div class="product-price">S/ 0.00</div>
+                        <button class="btn btn-outline btn-sm">Añadir al Carrito</button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -215,9 +194,9 @@
                 <div class="footer-links">
                     <h4>Enlaces</h4>
                     <ul>
-                        <li><a href="#">Inicio</a></li>
+                        <li><a href="index.html">Inicio</a></li>
                         <li><a href="#">Catálogo</a></li>
-                        <li><a href="#">Nosotros</a></li>
+                        <li><a href="index.html#nosotros">Nosotros</a></li>
                         <li><a href="#">Términos y Condiciones</a></li>
                     </ul>
                 </div>
