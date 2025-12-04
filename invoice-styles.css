@@ -2,146 +2,91 @@
    ESTILOS PARA FACTURACIÓN ELECTRÓNICA
    ============================================ */
 
-/* Badges de estado de comprobante */
-.invoice-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.badge-emitido {
-    background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
-    color: white;
-    box-shadow: 0 2px 4px rgba(0, 137, 123, 0.3);
-}
-
-.badge-pendiente {
-    background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
-    color: white;
-    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
-}
-
-.badge-error {
-    background: linear-gradient(135deg, #ef5350 0%, #d32f2f 100%);
-    color: white;
-    box-shadow: 0 2px 4px rgba(211, 47, 47, 0.3);
-}
-
-.badge-sin-generar {
-    background: rgba(255, 255, 255, 0.1);
-    color: #888;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Columna de comprobante */
-.invoice-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: center;
-}
-
-.invoice-number {
-    font-weight: 700;
-    color: var(--primary-color);
-    font-size: 0.95rem;
-    font-family: 'Courier New', monospace;
-}
-
-/* Loading spinner */
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* ============================================
-   BOTÓN ESTILO SUNAT - ICONO ÚNICO
-   ============================================ */
-
-.btn-sunat {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+/* Botones de icono uniformes */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     border: none;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 1.1rem;
-    font-weight: 700;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
+    background: none;
     text-decoration: none;
 }
 
-/* Estado: Pendiente de generar (colores SUNAT) */
-.btn-sunat.pendiente {
-    background: linear-gradient(135deg, #a8324a 0%, #1e5aa8 100%);
+/* Botón de factura */
+.btn-invoice {
+    background: rgba(255, 255, 255, 0.1);
+    color: #888;
+}
+
+.btn-invoice:hover {
+    transform: scale(1.1);
+}
+
+.btn-invoice.pendiente {
+    background: linear-gradient(135deg, #5c6bc0 0%, #3949ab 100%);
     color: white;
-    box-shadow: 0 2px 8px rgba(168, 50, 74, 0.4);
+    box-shadow: 0 2px 6px rgba(92, 107, 192, 0.4);
 }
 
-.btn-sunat.pendiente:hover {
-    transform: scale(1.15);
-    box-shadow: 0 4px 12px rgba(168, 50, 74, 0.6);
+.btn-invoice.pendiente:hover {
+    box-shadow: 0 4px 10px rgba(92, 107, 192, 0.6);
 }
 
-.btn-sunat.pendiente i {
-    font-size: 1.3rem;
-}
-
-/* Estado: Emitido/PDF */
-.btn-sunat.emitido {
-    background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+.btn-invoice.emitido {
+    background: linear-gradient(135deg, #26a69a 0%, #00897b 100%);
     color: white;
-    box-shadow: 0 2px 8px rgba(0, 137, 123, 0.4);
+    box-shadow: 0 2px 6px rgba(38, 166, 154, 0.4);
 }
 
-.btn-sunat.emitido:hover {
-    transform: scale(1.15);
-    box-shadow: 0 4px 12px rgba(0, 137, 123, 0.6);
+.btn-invoice.emitido:hover {
+    box-shadow: 0 4px 10px rgba(38, 166, 154, 0.6);
 }
 
-/* Estado: Error */
-.btn-sunat.error {
+.btn-invoice.error {
     background: linear-gradient(135deg, #ef5350 0%, #d32f2f 100%);
     color: white;
-    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);
+    box-shadow: 0 2px 6px rgba(211, 47, 47, 0.4);
 }
 
-.btn-sunat.error:hover {
-    transform: scale(1.15);
-    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.6);
+.btn-invoice.error:hover {
+    box-shadow: 0 4px 10px rgba(211, 47, 47, 0.6);
 }
 
-/* Animación de loading */
-.btn-sunat.loading {
-    pointer-events: none;
-    opacity: 0.7;
+/* Botón eliminar */
+.btn-delete-sale {
+    color: #ff5252;
 }
 
-.btn-sunat.loading i {
-    animation: spin 1s linear infinite;
+.btn-delete-sale:hover {
+    color: #ff1744;
+    transform: scale(1.1);
 }
 
-/* Botón de descarga PDF */
-.btn-download-pdf {
-    background: linear-gradient(135deg, #00acc1 0%, #00838f 100%);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.3s ease;
+/* Loading spinner */
+@keyframes spinning {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-.btn-download-pdf:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 172, 193, 0.4);
+.spinning {
+    animation: spinning 1s linear infinite;
+}
+
+/* Columna de comprobante */
+.invoice-cell {
+    text-align: center;
+}
+
+.invoice-number {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
 }

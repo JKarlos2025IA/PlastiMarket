@@ -515,24 +515,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('no-data-message').style.display = 'none';
 
         sales.forEach(sale => {
-            // Determine if it's an invoice type or legacy
             const isInvoice = sale.type === 'invoice';
             const itemCount = isInvoice && sale.items ? sale.items.length : 1;
 
-            // --- Main Row ---
-            // --- Main Row ---
             const tr = document.createElement('tr');
             tr.className = 'sale-row';
-            tr.dataset.id = sale.id; // Ensure ID is accessible
+            tr.dataset.id = sale.id;
 
-            // Format Date
-            // Handle both Firestore Timestamp and string dates (legacy)
             let dateStr = sale.fecha;
             if (sale.timestamp && typeof sale.timestamp.toDate === 'function') {
                 dateStr = sale.timestamp.toDate().toLocaleDateString('es-PE');
             }
 
-            // Product Summary
             let productSummary = '';
             if (isInvoice && sale.items && sale.items.length > 0) {
                 productSummary = `${sale.items[0].producto} <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
@@ -540,43 +534,54 @@ document.addEventListener('DOMContentLoaded', async () => {
                 productSummary = sale.producto || 'Producto desconocido';
             }
 
-            // Total Formatting
             const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total || 0);
 
+            // Botón de factura con icono tipo documento
+            let invoiceBtn = '';
+            if (sale.invoiceStatus === 'emitido') {
+                invoiceBtn = sale.invoicePDF
+                    ? `<a href="${sale.invoicePDF}" target="_blank" class="btn-icon btn-invoice emitido" title="Ver PDF"><i class="ph ph-file-pdf"></i></a>`
+                    : `<span class="btn-icon btn-invoice emitido" title="Emitido"><i class="ph ph-check-circle"></i></span>`;
+            } else if (sale.invoiceStatus === 'error') {
+                invoiceBtn = `<button class="btn-icon btn-invoice error btn-generate-invoice" data-id="${sale.id}" title="Error - Click para reintentar"><i class="ph ph-warning"></i></button>`;
+            } else {
+                invoiceBtn = `<button class="btn-icon btn-invoice pendiente btn-generate-invoice" data-id="${sale.id}" title="Generar Comprobante"><i class="ph ph-file-text"></i></button>`;
+            }
+
             tr.innerHTML = `
-        < td > <i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td >
+                <td><i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td>
                 <td>${sale.cliente || 'Cliente General'}</td>
                 <td>${productSummary}</td>
                 <td style="font-weight: bold; color: var(--primary-color);">${totalFormatted}</td>
                 <td><span class="status-badge status-${(sale.pago || 'efectivo').toLowerCase()}">${(sale.pago || 'Efectivo').toUpperCase()}</span></td>
                 <td style="font-size: 0.85em; color: #888;">${sale.createdBy || 'N/A'}</td>
-                <td class="invoice-cell">
-                    ${sale.invoiceStatus === 'emitido' ? `
-                        <span class="invoice-number">${sale.invoiceNumber || ''}</span>
-                        ${sale.invoicePDF ? `<a href="${sale.invoicePDF}" target="_blank" class="btn-sunat emitido" title="Ver PDF"><i class="ph ph-file-pdf"></i></a>` : '<span class="btn-sunat emitido" title="Emitido">✓</span>'}
-                    ` : sale.invoiceStatus === 'error' ? `
-                        <button class="btn-sunat error" data-id="${sale.id}" title="Error - Click para reintentar">!</button>
-                    ` : `
-                        <button class="btn-sunat pendiente btn-generate-invoice" data-id="${sale.id}" title="Generar Comprobante"><i class="ph ph-receipt"></i></button>
-                    `}
-                </td>
+                <td>${invoiceBtn}</td>
                 <td>
-                    <button class="btn-delete" data-id="${sale.id}" style="background:none; border:none; color: #ff4444; cursor:pointer;" title="Eliminar">
-                        <i class="ph ph-trash" style="font-size: 1.2rem;"></i>
+                    <button class="btn-icon btn-delete-sale" data-id="${sale.id}" title="Eliminar">
+                        <i class="ph ph-trash"></i>
                     </button>
                 </td>
-    `;
+            `;
 
-
-            // --- Detail Row (Hidden by default) ---
+            // Detail Row
             const trDetail = document.createElement('tr');
             trDetail.className = 'detail-row';
-            trDetail.id = `detail - ${sale.id} `;
+            trDetail.id = `detail-${sale.id}`;
 
             let detailsHtml = '';
             if (isInvoice && sale.items) {
+                const itemsRows = sale.items.map(item => `
+                    <tr>
+                        <td>${item.producto}</td>
+                        <td>${item.unidad}</td>
+                        <td>${item.cantidad}</td>
+                        <td>S/ ${parseFloat(item.precio_unit).toFixed(2)}</td>
+                        <td>S/ ${parseFloat(item.total).toFixed(2)}</td>
+                    </tr>
+                `).join('');
+
                 detailsHtml = `
-        < div class="detail-content" >
+                    <div class="detail-content">
                         <table class="detail-table">
                             <thead>
                                 <tr>
@@ -587,54 +592,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <th>Total</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                ${sale.items.map(item => `
-                                    <tr>
-                                        <td>${item.producto}</td>
-                                        <td>${item.unidad}</td>
-                                        <td>${item.cantidad}</td>
-                                        <td>S/ ${parseFloat(item.precio_unit).toFixed(2)}</td>
-                                        <td>S/ ${parseFloat(item.total).toFixed(2)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
+                            <tbody>${itemsRows}</tbody>
                         </table>
                         <div style="margin-top: 10px; text-align: right; font-size: 0.9rem; color: #aaa;">
                             <strong>Subtotal:</strong> S/ ${(parseFloat(sale.subtotal) || 0).toFixed(2)} | 
                             <strong>IGV:</strong> S/ ${(parseFloat(sale.igv) || 0).toFixed(2)}
                         </div>
-                    </div >
-        `;
+                    </div>
+                `;
             } else {
                 detailsHtml = `
-        < div class="detail-content" >
+                    <div class="detail-content">
                         <p><em>Venta simple (sin detalle de ítems)</em></p>
                         <p>Producto: ${sale.producto}</p>
                         <p>Cantidad: ${sale.cantidad}</p>
-                    </div >
-        `;
+                    </div>
+                `;
             }
 
-            trDetail.innerHTML = `< td colspan = "8" > ${detailsHtml}</td > `;
+            trDetail.innerHTML = `<td colspan="8">${detailsHtml}</td>`;
 
-            // Add Click Event to Toggle
+            // Toggle Detail on Click
             tr.addEventListener('click', (e) => {
-                // Don't expand if clicking delete button
-                if (e.target.closest('.btn-delete')) return;
+                if (e.target.closest('.btn-delete-sale') || e.target.closest('.btn-generate-invoice')) return;
 
                 tr.classList.toggle('expanded');
-                const detailRow = document.getElementById(`detail - ${sale.id} `);
+                const detailRow = document.getElementById(`detail-${sale.id}`);
 
                 if (detailRow.classList.contains('active')) {
                     detailRow.classList.remove('active');
                 } else {
-                    // Optional: Close other open rows
-                    document.querySelectorAll('.detail-row.active').forEach(row => {
-                        row.classList.remove('active');
-                        const prevId = row.id.replace('detail-', '');
-                        const prevTr = document.querySelector(`tr[data - id= "${prevId}"]`);
-                        if (prevTr) prevTr.classList.remove('expanded');
-                    });
+                    document.querySelectorAll('.detail-row.active').forEach(row => row.classList.remove('active'));
+                    document.querySelectorAll('.sale-row.expanded').forEach(row => row.classList.remove('expanded'));
+                    tr.classList.add('expanded');
                     detailRow.classList.add('active');
                 }
             });
@@ -643,15 +633,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             salesTableBody.appendChild(trDetail);
         });
 
-        // Re-attach delete listeners
-        document.querySelectorAll('.btn-delete').forEach(btn => {
+        // Delete listeners
+        document.querySelectorAll('.btn-delete-sale').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                e.stopPropagation(); // Prevent row expansion
+                e.stopPropagation();
                 if (confirm('¿Estás seguro de eliminar esta venta?')) {
                     const id = e.currentTarget.dataset.id;
                     try {
                         await deleteDoc(doc(db, "ventas", id));
-                        // Table updates automatically via onSnapshot
                     } catch (error) {
                         console.error("Error deleting document: ", error);
                         alert("Error al eliminar la venta");
@@ -660,7 +649,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        // Attach invoice generation listeners
+        // Invoice generation listeners
         document.querySelectorAll('.btn-generate-invoice').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -670,17 +659,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 try {
                     button.disabled = true;
-                    button.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Generando...';
-
-                    console.log('Generando comprobante para venta:', saleId);
+                    button.innerHTML = '<i class="ph ph-spinner spinning"></i>';
 
                     const result = await generateInvoiceManual({ saleId });
 
-                    console.log('Resultado:', result.data);
-
                     if (result.data.success) {
                         alert(`✅ Comprobante generado: ${result.data.invoiceNumber}`);
-                        // Table will auto-update via onSnapshot
                     } else {
                         throw new Error(result.data.error || 'Error desconocido');
                     }
@@ -693,6 +677,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     }
+
 
     function updateStats(sales) {
         document.getElementById('total-sales-count').textContent = sales.length;

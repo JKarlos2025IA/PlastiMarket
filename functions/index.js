@@ -52,7 +52,7 @@ exports.generateInvoiceManual = functions.https.onCall(async (data, context) => 
 
         // 3. Determinar tipo de comprobante
         const tipoComprobante = saleData.documento?.length === 11 ? 1 : 3; // 1=Factura, 3=Boleta
-        const serie = tipoComprobante === 1 ? 'F001' : 'B001';
+        const serie = tipoComprobante === 1 ? 'F001' : 'B001'; // F001=Factura, B001=Boleta
 
         // 4. Obtener siguiente correlativo
         const correlativo = await getNextCorrelative(serie);
