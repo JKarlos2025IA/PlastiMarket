@@ -43,54 +43,77 @@ exports.generateInvoice = functions.firestore
             // 3. Obtener siguiente correlativo
             const correlativo = await getNextCorrelative(serie);
 
-            // 4. Preparar datos para APIsPERU
+            // 4. Preparar datos para APIsPERU (según especificación oficial)
             const invoicePayload = {
-                ruc: APISPERU_CONFIG.ruc,
-                usuarioSol: APISPERU_CONFIG.usuarioSol,
-                claveSol: APISPERU_CONFIG.claveSol,
-                tipoDoc: tipoComprobante,
+                // Campos obligatorios según API
+                ublVersion: "2.1",
+                tipoOperacion: "0101", // Venta interna
+                tipoDoc: tipoComprobante, // "01" o "03"
                 serie: serie,
-                numero: correlativo,
-                fechaEmision: saleData.fecha,
-                tipoMoneda: 'PEN',
+                correlativo: String(correlativo),
+                fechaEmision: `${saleData.fecha}T00:00:00-05:00`, // ISO 8601 format
+                tipoMoneda: "PEN",
+
+                // Cliente
                 client: {
-                    tipoDoc: saleData.documento?.length === 11 ? '6' : '1',
-                    numDoc: saleData.documento || '00000000',
-                    rznSocial: saleData.cliente || 'CLIENTE VARIOS'
+                    tipoDoc: saleData.documento?.length === 11 ? "6" : "1", // 6=RUC, 1=DNI
+                    numDoc: parseInt(saleData.documento) || 0,
+                    rznSocial: saleData.cliente || "CLIENTE VARIOS",
+                    address: {}
                 },
+
+                // Empresa emisora
                 company: {
-                    ruc: APISPERU_CONFIG.ruc,
-                    razonSocial: 'SILVA GUEDEZ LEONARDO JOSE',
-                    nombreComercial: 'PLASTIMARKET',
+                    ruc: parseInt(APISPERU_CONFIG.ruc),
+                    razonSocial: "SILVA GUEDEZ LEONARDO JOSE",
+                    nombreComercial: "PLASTIMARKET",
                     address: {
-                        direccion: 'Dirección de la empresa'
+                        direccion: "Dirección de la empresa" // Actualizar con dirección real
                     }
                 },
-                details: saleData.items.map((item, index) => ({
-                    codProducto: item.codigo || `ITEM${index + 1}`,
-                    unidad: item.unidad || 'NIU',
-                    descripcion: item.producto,
-                    cantidad: item.cantidad,
-                    mtoValorUnitario: calculateBaseValue(item.precio_unit, item.impuesto),
-                    mtoValorVenta: calculateBaseValue(item.total, item.impuesto),
-                    mtoBaseIgv: calculateBaseValue(item.total, item.impuesto),
-                    porcentajeIgv: item.impuesto === '18' ? 18 : 0,
-                    igv: item.impuesto === '18' ? (item.total - calculateBaseValue(item.total, item.impuesto)) : 0,
-                    tipAfeIgv: item.impuesto === '18' ? 10 : 20, // 10=Gravado, 20=Exonerado
-                    totalImpuestos: item.impuesto === '18' ? (item.total - calculateBaseValue(item.total, item.impuesto)) : 0,
-                    mtoValorGratuito: 0
-                })),
-                mtoOperGravadas: saleData.subtotal || 0,
-                mtoOperExoneradas: 0,
-                mtoIGV: saleData.igv || 0,
-                totalImpuestos: saleData.igv || 0,
-                valorVenta: saleData.subtotal || 0,
-                subTotal: saleData.total || 0,
-                mtoImpVenta: saleData.total || 0,
+
+                // Forma de pago
                 formaPago: {
-                    moneda: 'PEN',
-                    tipo: saleData.pago === 'Efectivo' || saleData.pago === 'Yape' || saleData.pago === 'Plin' ? 'Contado' : 'Credito'
-                }
+                    moneda: "PEN",
+                    tipo: saleData.pago === 'Efectivo' || saleData.pago === 'Yape' || saleData.pago === 'Plin' ? "Contado" : "Credito"
+                },
+
+                // Totales
+                mtoOperGravadas: parseFloat((saleData.subtotal || 0).toFixed(2)),
+                mtoOperExoneradas: 0,
+                mtoIGV: parseFloat((saleData.igv || 0).toFixed(2)),
+                totalImpuestos: parseFloat((saleData.igv || 0).toFixed(2)),
+                valorVenta: parseFloat((saleData.subtotal || 0).toFixed(2)),
+                subTotal: parseFloat((saleData.total || 0).toFixed(2)),
+                mtoImpVenta: parseFloat((saleData.total || 0).toFixed(2)),
+
+                // Detalles de items
+                details: saleData.items.map((item, index) => {
+                    const baseValue = calculateBaseValue(item.total, item.impuesto);
+                    const igvValue = item.impuesto === '18' ? (item.total - baseValue) : 0;
+
+                    return {
+                        codProducto: item.codigo || `PROD${String(index + 1).padStart(3, '0')}`,
+                        unidad: item.unidad || "NIU", // NIU = Unidad (Bienes)
+                        descripcion: item.producto,
+                        cantidad: parseFloat(item.cantidad),
+                        mtoValorUnitario: parseFloat((item.precio_unit / (item.impuesto === '18' ? 1.18 : 1)).toFixed(2)),
+                        mtoValorVenta: parseFloat(baseValue.toFixed(2)),
+                        mtoBaseIgv: parseFloat(baseValue.toFixed(2)),
+                        porcentajeIgv: item.impuesto === '18' ? 18 : 0,
+                        igv: parseFloat(igvValue.toFixed(2)),
+                        tipAfeIgv: item.impuesto === '18' ? 10 : 20, // 10=Gravado-Operación Onerosa, 20=Exonerado
+                        totalImpuestos: parseFloat(igvValue.toFixed(2))
+                    };
+                }),
+
+                // Leyendas (requerido)
+                legends: [
+                    {
+                        code: "1000",
+                        value: numeroALetras(saleData.total || 0)
+                    }
+                ]
             };
 
             console.log('[generateInvoice] Payload preparado:', JSON.stringify(invoicePayload, null, 2));
@@ -137,6 +160,51 @@ exports.generateInvoice = functions.firestore
 // ==================================
 // HELPER FUNCTIONS
 // ==================================
+
+function numeroALetras(num) {
+    const unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+    const decenas = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+    const especiales = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+    const centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
+
+    const convertirGrupo = (n) => {
+        if (n === 0) return '';
+        if (n < 10) return unidades[n];
+        if (n >= 10 && n < 20) return especiales[n - 10];
+        if (n >= 20 && n < 100) {
+            const dec = Math.floor(n / 10);
+            const uni = n % 10;
+            return uni === 0 ? decenas[dec] : `${decenas[dec]} Y ${unidades[uni]}`;
+        }
+        if (n === 100) return 'CIEN';
+        if (n < 1000) {
+            const cen = Math.floor(n / 100);
+            const resto = n % 100;
+            return resto === 0 ? centenas[cen] : `${centenas[cen]} ${convertirGrupo(resto)}`;
+        }
+    };
+
+    const entero = Math.floor(num);
+    const decimal = Math.round((num - entero) * 100);
+
+    if (entero === 0) {
+        return `CERO Y ${String(decimal).padStart(2, '0')}/100 SOLES`;
+    }
+
+    let resultado = '';
+
+    if (entero >= 1000) {
+        const miles = Math.floor(entero / 1000);
+        resultado += miles === 1 ? 'MIL ' : `${convertirGrupo(miles)} MIL `;
+        entero = entero % 1000;
+    }
+
+    if (entero > 0) {
+        resultado += convertirGrupo(entero);
+    }
+
+    return `${resultado.trim()} Y ${String(decimal).padStart(2, '0')}/100 SOLES`;
+}
 
 function calculateBaseValue(total, impuesto) {
     if (impuesto === '18') {
