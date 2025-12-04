@@ -553,14 +553,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td class="invoice-cell">
                     ${sale.invoiceStatus === 'emitido' ? `
                         <span class="invoice-number">${sale.invoiceNumber || ''}</span>
-                        <span class="invoice-badge badge-emitido">✅ Emitido</span>
-                        ${sale.invoicePDF ? `<a href="${sale.invoicePDF}" target="_blank" class="btn-download-pdf" title="Descargar PDF"><i class="ph ph-file-pdf"></i> PDF</a>` : ''}
+                        ${sale.invoicePDF ? `<a href="${sale.invoicePDF}" target="_blank" class="btn-sunat emitido" title="Ver PDF"><i class="ph ph-file-pdf"></i></a>` : '<span class="btn-sunat emitido" title="Emitido">✓</span>'}
                     ` : sale.invoiceStatus === 'error' ? `
-                        <span class="invoice-badge badge-error" title="${sale.invoiceError || 'Error desconocido'}">❌ Error</span>
-                        <button class="btn-generate-invoice" data-id="${sale.id}" title="Reintentar"><i class="ph ph-arrow-clockwise"></i> Reintentar</button>
+                        <button class="btn-sunat error" data-id="${sale.id}" title="Error - Click para reintentar">!</button>
                     ` : `
-                        <span class="invoice-badge badge-sin-generar">⏳ Sin generar</span>
-                        <button class="btn-generate-invoice" data-id="${sale.id}" title="Generar Comprobante"><i class="ph ph-file-text"></i> Generar</button>
+                        <button class="btn-sunat pendiente btn-generate-invoice" data-id="${sale.id}" title="Generar Comprobante"><i class="ph ph-receipt"></i></button>
                     `}
                 </td>
                 <td>
