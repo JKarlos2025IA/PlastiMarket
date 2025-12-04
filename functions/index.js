@@ -50,9 +50,9 @@ exports.generateInvoiceManual = functions.https.onCall(async (data, context) => 
             throw new functions.https.HttpsError('failed-precondition', 'La venta no tiene items');
         }
 
-        // 3. Determinar tipo de comprobante
+        // 3. Determinar tipo de comprobante (RUC 11 dígitos = Factura, otro = Boleta)
         const tipoComprobante = saleData.documento?.length === 11 ? 1 : 3; // 1=Factura, 3=Boleta
-        const serie = tipoComprobante === 1 ? 'F001' : 'B001'; // F001=Factura, B001=Boleta
+        const serie = tipoComprobante === 1 ? 'F001' : 'BBB1'; // F001=Factura, BBB1=Boleta
 
         // 4. Obtener siguiente correlativo
         const correlativo = await getNextCorrelative(serie);
@@ -192,12 +192,11 @@ exports.testNubeFact = functions.https.onCall(async (data, context) => {
     }
 
     try {
-        // Enviar comprobante de prueba
         const testPayload = {
             operacion: "generar_comprobante",
             tipo_de_comprobante: 3,
-            serie: "B001",
-            numero: await getNextCorrelative('B001'),
+            serie: "BBB1",
+            numero: await getNextCorrelative('BBB1'),
             sunat_transaction: 1,
             cliente_tipo_de_documento: "1",
             cliente_numero_de_documento: "12345678",
