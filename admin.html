@@ -72,8 +72,8 @@
                             <div class="form-group">
                                 <label>RUC / DNI</label>
                                 <div class="input-group">
-                                    <input type="text" id="documento" placeholder="Ingrese 11 dígitos" maxlength="11">
-                                    <button type="button" id="btn-search-ruc" class="btn-icon" title="Buscar RUC"><i
+                                    <input type="text" id="documento" placeholder="RUC (11) o DNI (8)" maxlength="11">
+                                    <button type="button" id="btn-search-ruc" class="btn-icon" title="Buscar RUC/DNI"><i
                                             class="ph ph-magnifying-glass"></i></button>
                                 </div>
                             </div>
@@ -101,133 +101,112 @@
                                     </tr>
                                 </thead>
                                 <tbody id="invoice-items-body">
-                                    <!-- Rows added dynamically -->
+                                    <!-- Dynamic Rows -->
                                 </tbody>
                             </table>
                         </div>
-                        <button type="button" id="btn-add-item" class="btn btn-secondary btn-sm">
-                            <i class="ph ph-plus"></i> Agregar Ítem
-                        </button>
+                        <div class="add-item-container">
+                            <button type="button" id="btn-add-item" class="btn-icon-only" title="Agregar Ítem">
+                                <i class="ph ph-plus"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Parte 3: Totales y Pago -->
                     <div class="invoice-footer card-panel">
-                        <div class="invoice-totals-grid">
-                            <div class="payment-info">
+                        <div class="totals-grid">
+                            <div class="totals-label">Subtotal:</div>
+                            <div class="totals-value" id="lbl-subtotal">S/ 0.00</div>
+                            <div class="totals-label">IGV (18%):</div>
+                            <div class="totals-value" id="lbl-igv">S/ 0.00</div>
+                            <div class="totals-label total-final">TOTAL:</div>
+                            <div class="totals-value total-final" id="lbl-total">S/ 0.00</div>
+                        </div>
+                        <div class="payment-section">
+                            <div class="form-group">
                                 <label>Método de Pago</label>
                                 <select id="pago" required>
-                                    <option value="efectivo">Efectivo</option>
-                                    <option value="yape">Yape</option>
-                                    <option value="plin">Plin</option>
-                                    <option value="transferencia">Transferencia</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Yape">Yape</option>
+                                    <option value="Plin">Plin</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="Credito">Crédito</option>
                                 </select>
                             </div>
-                            <div class="totals-info">
-                                <div class="total-row">
-                                    <span>Subtotal:</span>
-                                    <span id="lbl-subtotal">S/ 0.00</span>
-                                </div>
-                                <div class="total-row">
-                                    <span>IGV (18%):</span>
-                                    <span id="lbl-igv">S/ 0.00</span>
-                                </div>
-                                <div class="total-row main-total">
-                                    <span>TOTAL:</span>
-                                    <span id="lbl-total">S/ 0.00</span>
-                                </div>
-                            </div>
+                            <button type="submit" class="btn-primary btn-large">
+                                <i class="ph ph-floppy-disk"></i> GUARDAR VENTA
+                            </button>
                         </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="ph ph-floppy-disk"></i> GUARDAR VENTA
-                        </button>
                     </div>
                 </form>
             </div>
 
             <!-- History Section -->
             <div id="history" class="dashboard-section">
-                <div class="history-header">
-                    <h2 class="section-title">Historial</h2>
-                    <div class="action-buttons">
-                        <button onclick="copyForWhatsApp()" class="btn btn-whatsapp">
-                            <i class="ph ph-whatsapp-logo"></i> Reporte WhatsApp
-                        </button>
-                        <button onclick="exportToCSV()" class="btn btn-outline">
-                            <i class="ph ph-download-simple"></i> Exportar CSV
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Filters -->
-                <div class="filters-container">
-                    <h3>Filtros de Búsqueda</h3>
-                    <div class="filters-grid">
-                        <div class="form-group">
-                            <label>Desde</label>
-                            <input type="date" id="filter-date-start">
-                        </div>
-                        <div class="form-group">
-                            <label>Hasta</label>
-                            <input type="date" id="filter-date-end">
-                        </div>
-                        <div class="form-group">
-                            <label>Cliente</label>
+                <div class="card-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Historial de Ventas</h3>
+                        <div class="filters-bar">
+                            <input type="date" id="filter-date-start" title="Desde">
+                            <input type="date" id="filter-date-end" title="Hasta">
                             <input type="text" id="filter-cliente" placeholder="Buscar cliente...">
-                        </div>
-                        <div class="form-group">
-                            <label>Pago</label>
                             <select id="filter-pago">
-                                <option value="">Todos</option>
-                                <option value="efectivo">Efectivo</option>
-                                <option value="yape">Yape</option>
-                                <option value="plin">Plin</option>
-                                <option value="transferencia">Transferencia</option>
+                                <option value="">Todos los pagos</option>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Yape">Yape</option>
+                                <option value="Plin">Plin</option>
+                                <option value="Transferencia">Transferencia</option>
                             </select>
-                        </div>
-                        <div class="filter-actions">
-                            <button id="btn-apply-filters" class="btn btn-primary">FILTRAR</button>
-                            <button id="btn-clear-filters" class="btn btn-outline">LIMPIAR</button>
+                            <button id="btn-apply-filters" class="btn-secondary"><i class="ph ph-funnel"></i>
+                                Filtrar</button>
+                            <button id="btn-clear-filters" class="btn-outline" title="Limpiar"><i
+                                    class="ph ph-x"></i></button>
                         </div>
                     </div>
-                </div>
-
-                <div class="stats">
-                    Total Ventas: <span id="total-sales-count">0</span> | Ingresos: S/ <span
-                        id="total-revenue">0.00</span>
-                </div>
-
-                <div class="table-container">
-                    <table id="sales-table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Cliente</th>
-                                <th>Producto</th>
-                                <th>Cant.</th>
-                                <th>Total</th>
-                                <th>Pago</th>
-                                <th>Vendedor</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Rows will be populated by JS -->
-                        </tbody>
-                    </table>
-                    <div id="no-data-message" style="display: none; text-align: center; padding: 20px; color: #888;">
-                        No hay ventas registradas.
+                    <div class="table-responsive">
+                        <table class="data-table" id="sales-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Producto/Detalle</th>
+                                    <th>Total</th>
+                                    <th>Pago</th>
+                                    <th>Vendedor</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                        <div id="no-data-message" style="display:none; text-align:center; padding: 20px; color: #888;">
+                            No se encontraron ventas con los filtros seleccionados.
+                        </div>
+                    </div>
+                    <div class="stats-bar">
+                        <div class="stat-item">
+                            <span>Ventas Totales:</span>
+                            <strong id="total-sales-count">0</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>Ingresos Totales:</span>
+                            <strong>S/ <span id="total-revenue">0.00</span></strong>
+                        </div>
+                        <div class="export-actions">
+                            <button onclick="copyForWhatsApp()" class="btn-whatsapp"><i class="ph ph-whatsapp-logo"></i>
+                                Copiar Reporte</button>
+                            <button onclick="exportToCSV()" class="btn-outline"><i class="ph ph-download-simple"></i>
+                                Exportar CSV</button>
+                        </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
     <!-- Firebase SDKs are now imported in admin.js -->
-    <script src="admin.js?v=11" type="module"></script>
+    <script src="admin.js?v=12" type="module"></script>
 </body>
 
 </html>

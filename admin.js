@@ -131,12 +131,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Invoice Logic ---
 
-    // RUC Lookup Configuration
-    const RUC_API_TOKEN = ''; // TODO: Add API Token here (e.g., from ApisPeru or Nubefact)
-    const RUC_API_URL = 'https://api.apis.net.pe/v1/ruc?numero='; // Example URL
+    // RUC/DNI Lookup Configuration
+    const API_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6Imxlb25hcmRvc2lsdmEyMDE5ODRAZ21haWwuY29tIn0.QYhQlE0qurCjc2COCmX3oY3cf3lkFAb2z9A17yr_9pQ';
+    const BASE_API_URL = 'https://dniruc.apisperu.com/api/v1';
 
-    // Mock Database for Demo
-    const MOCK_RUC_DB = {
+    // Mock Database for Demo (Fallback)
+    const MOCK_DB = {
         '20100070970': 'SUPERMERCADOS PERUANOS S.A.',
         '20600000000': 'EMPRESA DE TRANSPORTES FLORES HNOS',
         '20100154308': 'INDUSTRIAL PAPELERA ATLAS S.A.',
@@ -147,43 +147,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         '20601234567': 'PLASTICOS DEL SUR S.A.C.'
     };
 
-    async function consultarRUC(ruc) {
-        // 1. Check Mock DB first (Fast & Free)
-        if (MOCK_RUC_DB[ruc]) {
+    async function consultarDocumento(numero) {
+        // 1. Check Mock DB first (Fast & Free for Demo RUCs)
+        if (MOCK_DB[numero]) {
             return {
-                razonSocial: MOCK_RUC_DB[ruc],
+                nombre: MOCK_DB[numero],
                 direccion: 'Dirección simulada para demo',
                 estado: 'ACTIVO'
             };
         }
 
-        // 2. If not in Mock and Token exists, try Real API
-        if (RUC_API_TOKEN) {
+        // 2. API Call
+        if (API_TOKEN) {
+            let type = '';
+            if (numero.length === 11) type = 'ruc';
+            else if (numero.length === 8) type = 'dni';
+            else throw new Error('El documento debe tener 8 (DNI) u 11 (RUC) dígitos.');
+
             try {
-                const response = await fetch(`${RUC_API_URL}${ruc}`, {
-                    headers: { 'Authorization': `Bearer ${RUC_API_TOKEN}` }
-                });
-                if (!response.ok) throw new Error('Error en API externa');
+                const response = await fetch(`${BASE_API_URL}/${type}/${numero}?token=${API_TOKEN}`);
+                if (!response.ok) throw new Error('Error al consultar API externa');
                 const data = await response.json();
-                return {
-                    razonSocial: data.nombre || data.razonSocial,
-                    direccion: data.direccion || '',
-                    estado: data.estado || 'ACTIVO'
-                };
+
+                if (type === 'ruc') {
+                    return {
+                        nombre: data.razonSocial,
+                        direccion: `${data.direccion} - ${data.departamento} - ${data.provincia} - ${data.distrito}`,
+                        estado: data.estado
+                    };
+                } else {
+                    // DNI
+                    return {
+                        nombre: `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`,
+                        direccion: '', // DNI usually doesn't return address publicly
+                        estado: 'ACTIVO'
+                    };
+                }
             } catch (error) {
                 console.error("API Error:", error);
-                throw error; // Re-throw to be handled by caller
+                throw error;
             }
         }
 
-        // 3. Not found
-        throw new Error('RUC no encontrado en base de datos local ni API.');
+        throw new Error('Documento no encontrado.');
     }
 
     btnSearchRuc.addEventListener('click', async () => {
-        const ruc = inputDocumento.value.trim();
-        if (ruc.length !== 11 || isNaN(ruc)) {
-            alert("El RUC debe tener 11 dígitos numéricos");
+        const documento = inputDocumento.value.trim();
+        if (documento.length !== 11 && documento.length !== 8 || isNaN(documento)) {
+            alert("El documento debe ser un RUC (11 dígitos) o DNI (8 dígitos) válido.");
             return;
         }
 
@@ -194,11 +206,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputCliente.value = 'Buscando...';
 
         try {
-            const data = await consultarRUC(ruc);
-            inputCliente.value = data.razonSocial;
+            const data = await consultarDocumento(documento);
+            inputCliente.value = data.nombre;
+            // If we add an address field later: 
+            // if(data.direccion) document.getElementById('direccion').value = data.direccion;
         } catch (error) {
             console.warn(error);
-            alert("No se encontró información para este RUC. Por favor ingrese el nombre manualmente.");
+            alert("No se encontró información. Por favor ingrese el nombre manualmente.");
             inputCliente.value = '';
             inputCliente.focus();
         } finally {
