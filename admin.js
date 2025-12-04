@@ -99,56 +99,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const password = document.getElementById('admin-password').value;
         loginError.style.display = 'none';
 
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-        } catch (error) {
-            console.error("Login Error:", error);
-            loginError.textContent = "Error de inicio de sesión: " + error.message;
-            loginError.style.display = 'block';
-        }
-    });
-
-    // Logout
-    logoutBtn.addEventListener('click', async () => {
-        try {
-            await signOut(auth);
-        } catch (error) {
-            console.error("Logout Error:", error);
-        }
-    });
-
-    // --- Navigation ---
-            <td>
-                <select class="item-product" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="Bolsa Blanca 16x24">Bolsa Blanca 16x24</option>
-                    <option value="Bolsa Blanca 20x30">Bolsa Blanca 20x30</option>
-                    <option value="Bolsa Cristal 10x15">Bolsa Cristal 10x15</option>
-                    <option value="Manga Industrial">Manga Industrial</option>
-                    <option value="Descartables">Descartables</option>
-                    <option value="Otros">Otros</option>
-                </select>
-            </td>
-            <td>
-                <select class="item-unit">
-                    <option value="UND">UND</option>
-                    <option value="KG">KG</option>
-                    <option value="MILLAR">MILLAR</option>
-                    <option value="PAQ">PAQ</option>
-                </select>
-            </td>
-            <td><input type="number" class="item-qty" value="1" min="1" required></td>
-            <td><input type="number" class="item-price" value="0.00" step="0.01" min="0" required></td>
-            <td><input type="text" class="item-total" value="0.00" readonly style="background: #f9f9f9;"></td>
-            <td>
-                ${rowCount > 1 ? '<button type="button" class="btn-remove-item"><i class="ph ph-trash"></i></button>' : ''}
-            </td>
-    `;
-
-            itemsBody.appendChild(row);
-            attachRowEvents(row);
-        }
-
         function attachRowEvents(row) {
             const qtyInput = row.querySelector('.item-qty');
             const priceInput = row.querySelector('.item-price');
@@ -189,9 +139,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const igv = subtotal * 0.18;
             const total = subtotal + igv;
 
-            lblSubtotal.textContent = `S / ${ subtotal.toFixed(2) } `;
-            lblIgv.textContent = `S / ${ igv.toFixed(2) } `;
-            lblTotal.textContent = `S / ${ total.toFixed(2) } `;
+            lblSubtotal.textContent = `S / ${subtotal.toFixed(2)} `;
+            lblIgv.textContent = `S / ${igv.toFixed(2)} `;
+            lblTotal.textContent = `S / ${total.toFixed(2)} `;
 
             return { subtotal, igv, total };
         }
@@ -335,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Product Summary
                 let productSummary = '';
                 if (isInvoice && sale.items && sale.items.length > 0) {
-                    productSummary = `${ sale.items[0].producto } <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
+                    productSummary = `${sale.items[0].producto} <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
                 } else {
                     productSummary = sale.producto || 'Producto desconocido';
                 }
@@ -344,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total || 0);
 
                 tr.innerHTML = `
-        < td > <i class="ph ph-caret-down expand-icon"></i> ${ dateStr }</td >
+        < td > <i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td >
                 <td>${sale.cliente || 'Cliente General'}</td>
                 <td>${productSummary}</td>
                 <td>${itemCount}</td>
@@ -361,7 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // --- Detail Row (Hidden by default) ---
                 const trDetail = document.createElement('tr');
                 trDetail.className = 'detail-row';
-                trDetail.id = `detail - ${ sale.id } `;
+                trDetail.id = `detail - ${sale.id} `;
 
                 let detailsHtml = '';
                 if (isInvoice && sale.items) {
@@ -405,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
                 }
 
-                trDetail.innerHTML = `< td colspan = "8" > ${ detailsHtml }</td > `;
+                trDetail.innerHTML = `< td colspan = "8" > ${detailsHtml}</td > `;
 
                 // Add Click Event to Toggle
                 tr.addEventListener('click', (e) => {
@@ -413,7 +363,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (e.target.closest('.btn-delete')) return;
 
                     tr.classList.toggle('expanded');
-                    const detailRow = document.getElementById(`detail - ${ sale.id } `);
+                    const detailRow = document.getElementById(`detail - ${sale.id} `);
 
                     if (detailRow.classList.contains('active')) {
                         detailRow.classList.remove('active');
@@ -468,21 +418,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            let msg = `* REPORTE PLASTIMARKET(${ today }) *\n\n`;
+            let msg = `* REPORTE PLASTIMARKET(${today}) *\n\n`;
             let total = 0;
             todaysSales.forEach(s => {
                 if (s.items) {
                     s.items.forEach(item => {
-                        msg += `📦 ${ item.producto } x${ item.cantidad } (${ item.unidad }) \n`;
+                        msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad}) \n`;
                     });
                 } else {
-                    msg += `📦 ${ s.producto } x${ s.cantidad } \n`;
+                    msg += `📦 ${s.producto} x${s.cantidad} \n`;
                 }
-                msg += `👤 ${ s.cliente } - S / ${ s.total.toFixed(2) } \n`;
+                msg += `👤 ${s.cliente} - S / ${s.total.toFixed(2)} \n`;
                 msg += `----------------\n`;
                 total += s.total;
             });
-            msg += `\n * TOTAL: S / ${ total.toFixed(2) }* `;
+            msg += `\n * TOTAL: S / ${total.toFixed(2)}* `;
 
             navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
         };
@@ -495,11 +445,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentSales.forEach(s => {
                 if (s.items && s.items.length > 0) {
                     s.items.forEach(item => {
-                        csv += `${ s.fecha },${ s.cliente },${ s.documento || '' },${ item.producto },${ item.cantidad },${ item.unidad },${ item.precio_unit },${ item.total },${ s.total },${ s.pago },${ s.createdBy || '' } \n`;
+                        csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''} \n`;
                     });
                 } else {
                     // Legacy support
-                    csv += `${ s.fecha },${ s.cliente },${ s.documento || '' },${ s.producto },${ s.cantidad }, UND, ${ (s.total / s.cantidad).toFixed(2) },${ s.total },${ s.total },${ s.pago },${ s.createdBy || '' } \n`;
+                    csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad}, UND, ${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''} \n`;
                 }
             });
 
