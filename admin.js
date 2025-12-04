@@ -1,5 +1,5 @@
 // Admin Panel Logic for PlastiMarket
-import { auth, db } from "./firebase-config.js";
+import { auth, db, app } from "./firebase-config.js";
 import {
     signInWithEmailAndPassword,
     signOut,
@@ -16,6 +16,11 @@ import {
     where,
     getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
+
+// Initialize Cloud Functions
+const functions = getFunctions(app);
+const generateInvoiceManual = httpsCallable(functions, 'generateInvoiceManual');
 
 console.log("PlastiMarket Admin Loaded (Invoice Mode)");
 
@@ -542,16 +547,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         < td > <i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td >
                 <td>${sale.cliente || 'Cliente General'}</td>
                 <td>${productSummary}</td>
-                <td>${itemCount}</td>
                 <td style="font-weight: bold; color: var(--primary-color);">${totalFormatted}</td>
                 <td><span class="status-badge status-${(sale.pago || 'efectivo').toLowerCase()}">${(sale.pago || 'Efectivo').toUpperCase()}</span></td>
                 <td style="font-size: 0.85em; color: #888;">${sale.createdBy || 'N/A'}</td>
+                <td class="invoice-cell">
+                    ${sale.invoiceStatus === 'emitido' ? `
+                        <span class="invoice-number">${sale.invoiceNumber || ''}</span>
+                        <span class="invoice-badge badge-emitido">✅ Emitido</span>
+                        ${sale.invoicePDF ? `<a href="${sale.invoicePDF}" target="_blank" class="btn-download-pdf" title="Descargar PDF"><i class="ph ph-file-pdf"></i> PDF</a>` : ''}
+                    ` : sale.invoiceStatus === 'error' ? `
+                        <span class="invoice-badge badge-error" title="${sale.invoiceError || 'Error desconocido'}">❌ Error</span>
+                        <button class="btn-generate-invoice" data-id="${sale.id}" title="Reintentar"><i class="ph ph-arrow-clockwise"></i> Reintentar</button>
+                    ` : `
+                        <span class="invoice-badge badge-sin-generar">⏳ Sin generar</span>
+                        <button class="btn-generate-invoice" data-id="${sale.id}" title="Generar Comprobante"><i class="ph ph-file-text"></i> Generar</button>
+                    `}
+                </td>
                 <td>
                     <button class="btn-delete" data-id="${sale.id}" style="background:none; border:none; color: #ff4444; cursor:pointer;" title="Eliminar">
                         <i class="ph ph-trash" style="font-size: 1.2rem;"></i>
                     </button>
                 </td>
     `;
+
 
             // --- Detail Row (Hidden by default) ---
             const trDetail = document.createElement('tr');
@@ -641,6 +659,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                         console.error("Error deleting document: ", error);
                         alert("Error al eliminar la venta");
                     }
+                }
+            });
+        });
+
+        // Attach invoice generation listeners
+        document.querySelectorAll('.btn-generate-invoice').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const saleId = e.currentTarget.dataset.id;
+                const button = e.currentTarget;
+                const originalContent = button.innerHTML;
+
+                try {
+                    button.disabled = true;
+                    button.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Generando...';
+
+                    console.log('Generando comprobante para venta:', saleId);
+
+                    const result = await generateInvoiceManual({ saleId });
+
+                    console.log('Resultado:', result.data);
+
+                    if (result.data.success) {
+                        alert(`✅ Comprobante generado: ${result.data.invoiceNumber}`);
+                        // Table will auto-update via onSnapshot
+                    } else {
+                        throw new Error(result.data.error || 'Error desconocido');
+                    }
+                } catch (error) {
+                    console.error('Error al generar comprobante:', error);
+                    alert(`❌ Error: ${error.message}`);
+                    button.disabled = false;
+                    button.innerHTML = originalContent;
                 }
             });
         });

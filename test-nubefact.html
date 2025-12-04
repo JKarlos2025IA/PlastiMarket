@@ -52,6 +52,8 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
+            margin-right: 10px;
+            margin-bottom: 10px;
         }
 
         .btn:hover {
@@ -63,6 +65,10 @@
             background: #555;
             cursor: not-allowed;
             transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);
         }
 
         #result {
@@ -88,12 +94,14 @@
             border-radius: 6px;
             overflow-x: auto;
             margin-top: 10px;
+            font-size: 12px;
         }
 
         .links {
             margin-top: 15px;
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .links a {
@@ -125,35 +133,102 @@
                 transform: rotate(360deg);
             }
         }
+
+        .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .status-icon {
+            font-size: 20px;
+        }
+
+        .status-ok {
+            color: #4caf50;
+        }
+
+        .status-error {
+            color: #f44336;
+        }
+
+        .status-pending {
+            color: #ffc107;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h1>🧪 Prueba de Facturación - NubeFact</h1>
-        <p class="subtitle">Genera un comprobante de prueba para verificar la integración</p>
+        <p class="subtitle">Genera un comprobante de prueba usando Cloud Functions de Firebase</p>
 
-        <button id="btnTest" class="btn">
-            <span id="btnIcon">🚀</span>
-            <span id="btnText">Generar Comprobante de Prueba</span>
-        </button>
+        <div class="status-box">
+            <div class="status-item">
+                <span class="status-icon status-pending" id="auth-status">⏳</span>
+                <span>Estado de autenticación: <strong id="auth-text">Verificando...</strong></span>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button id="btnTest" class="btn" disabled>
+                <span id="btnIcon">🚀</span>
+                <span id="btnText">Generar Comprobante de Prueba</span>
+            </button>
+        </div>
 
         <div id="result"></div>
     </div>
 
+    <!-- Firebase SDK -->
     <script type="module">
-        import { db } from './firebase-config.js';
-        import { collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 
-        const NUBEFACT_CONFIG = {
-            apiUrl: 'https://api.nubefact.com/api/v1/d35d9433-89d8-4883-8d75-daafbc1365e5',
-            token: '5be2331e4c644d678a21a60001fab5ce7d338b19017e46a0bd1bb016b7d9edbc'
+        // Configuración Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzqYPKaON8VmO5gxXm4F5qDH9LHfAlkzM",
+            authDomain: "plastimarket2025.firebaseapp.com",
+            projectId: "plastimarket2025",
+            storageBucket: "plastimarket2025.firebasestorage.app",
+            messagingSenderId: "856359498768",
+            appId: "1:856359498768:web:2f6cb2e65dc4b0bfd3795b"
         };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app);
 
         const btnTest = document.getElementById('btnTest');
         const btnText = document.getElementById('btnText');
         const btnIcon = document.getElementById('btnIcon');
         const resultDiv = document.getElementById('result');
+        const authStatus = document.getElementById('auth-status');
+        const authText = document.getElementById('auth-text');
+
+        // Verificar autenticación
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authStatus.textContent = '✅';
+                authStatus.className = 'status-icon status-ok';
+                authText.textContent = `Autenticado como ${user.email}`;
+                btnTest.disabled = false;
+            } else {
+                authStatus.textContent = '❌';
+                authStatus.className = 'status-icon status-error';
+                authText.innerHTML = 'No autenticado. <a href="admin.html" style="color: #00bcd4;">Inicia sesión aquí</a>';
+                btnTest.disabled = true;
+            }
+        });
 
         btnTest.addEventListener('click', async () => {
             btnTest.disabled = true;
@@ -162,73 +237,31 @@
             resultDiv.style.display = 'none';
 
             try {
-                // Datos de prueba
-                const testInvoice = {
-                    operacion: "generar_comprobante",
-                    tipo_de_comprobante: 3, // Boleta
-                    serie: "B001",
-                    numero: 1,
-                    sunat_transaction: 1,
-                    cliente_tipo_de_documento: "1",
-                    cliente_numero_de_documento: "12345678",
-                    cliente_denominacion: "CLIENTE DE PRUEBA",
-                    cliente_direccion: "Lima, Perú",
-                    fecha_de_emision: new Date().toISOString().split('T')[0],
-                    moneda: 1,
-                    tipo_de_cambio: "",
-                    porcentaje_de_igv: 18,
-                    total_gravada: 84.75,
-                    total_inafecta: 0,
-                    total_exonerada: 0,
-                    total_igv: 15.25,
-                    total: 100.00,
-                    enviar_automaticamente_a_la_sunat: true,
-                    enviar_automaticamente_al_cliente: false,
-                    items: [{
-                        unidad_de_medida: "NIU",
-                        codigo: "PROD001",
-                        descripcion: "PRODUCTO DE PRUEBA",
-                        cantidad: 1,
-                        valor_unitario: 84.75,
-                        precio_unitario: 100.00,
-                        subtotal: 84.75,
-                        tipo_de_igv: 1,
-                        igv: 15.25,
-                        total: 100.00,
-                        anticipo_regularizacion: false
-                    }]
-                };
+                console.log('Llamando a testNubeFact...');
 
-                console.log('Enviando a NubeFact:', testInvoice);
+                const testNubeFact = httpsCallable(functions, 'testNubeFact');
+                const result = await testNubeFact();
 
-                const response = await fetch(NUBEFACT_CONFIG.apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${NUBEFACT_CONFIG.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(testInvoice)
-                });
+                console.log('Respuesta:', result.data);
 
-                const data = await response.json();
-                console.log('Respuesta de NubeFact:', data);
+                const data = result.data;
 
-                if (data.errors) {
-                    throw new Error(data.errors);
+                if (data.success) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ ¡Comprobante generado exitosamente!</h3>
+                        <p><strong>Serie-Número:</strong> ${data.data.serie}-${data.data.numero}</p>
+                        <p><strong>Estado SUNAT:</strong> ${data.data.aceptada_por_sunat ? '✅ Aceptado' : '⏳ Pendiente'}</p>
+                        <div class="links">
+                            ${data.data.enlace_del_pdf ? `<a href="${data.data.enlace_del_pdf}" target="_blank">📄 Ver PDF</a>` : ''}
+                            ${data.data.enlace_del_xml ? `<a href="${data.data.enlace_del_xml}" target="_blank">📋 Ver XML</a>` : ''}
+                        </div>
+                        <pre>${JSON.stringify(data.data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Error desconocido');
                 }
 
-                // Mostrar resultado exitoso
-                resultDiv.className = 'success';
-                resultDiv.innerHTML = `
-                    <h3>✅ ¡Comprobante generado exitosamente!</h3>
-                    <p><strong>Número:</strong> ${data.serie}-${data.numero}</p>
-                    <p><strong>Estado SUNAT:</strong> ${data.aceptada_por_sunat ? '✅ Aceptado' : '⏳ Pendiente'}</p>
-                    <div class="links">
-                        ${data.enlace_del_pdf ? `<a href="${data.enlace_del_pdf}" target="_blank">📄 Ver PDF</a>` : ''}
-                        ${data.enlace_del_xml ? `<a href="${data.enlace_del_xml}" target="_blank">📋 Ver XML</a>` : ''}
-                    </div>
-                    <pre>${JSON.stringify(data, null, 2)}</pre>
-                `;
                 resultDiv.style.display = 'block';
 
             } catch (error) {
@@ -237,7 +270,7 @@
                 resultDiv.innerHTML = `
                     <h3>❌ Error al generar comprobante</h3>
                     <p>${error.message}</p>
-                    <pre>${error.stack || ''}</pre>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
                 `;
                 resultDiv.style.display = 'block';
             } finally {

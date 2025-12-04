@@ -2,7 +2,7 @@
     "name": "functions",
     "description": "Cloud Functions for PlastiMarket - Electronic Invoicing",
     "engines": {
-        "node": "18"
+        "node": "20"
     },
     "main": "index.js",
     "dependencies": {
