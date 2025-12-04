@@ -675,3 +675,23 @@ tr:hover {
         align-items: stretch;
     }
 }
+/* Responsive: Mobile phones */
+@media (max-width: 480px) {
+    body { font-size: 12px; }
+    .admin-header { padding: 0.5rem 0.75rem; }
+    .logo-text { font-size: 1rem !important; }
+    .tab-btn { font-size: 0.75rem; padding: 0.4rem 0.6rem; }
+    .card-panel { padding: 0.5rem; }
+    .panel-title { font-size: 0.85rem; }
+    .form-group label { font-size: 0.75rem; }
+    .form-group input, .form-group select, .form-group textarea { padding: 0.5rem; font-size: 0.75rem; }
+    .btn { padding: 0.5rem 0.75rem; font-size: 0.75rem; }
+    .btn-large { padding: 0.65rem 1rem; font-size: 0.85rem; }
+    .data-table th, .data-table td { padding: 0.3rem 0.2rem; font-size: 0.65rem; }
+    .stat-item { font-size: 0.75rem; }
+    .stat-item strong { font-size: 0.85rem; }
+    .filters-bar input, .filters-bar select { font-size: 0.75rem; padding: 0.4rem; }
+    .export-actions button { font-size: 0.7rem; padding: 0.4rem 0.6rem; }
+    .side-drawer { width: 100%; }
+    .drawer-header h3 { font-size: 0.9rem; }
+}
