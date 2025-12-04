@@ -367,113 +367,216 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('no-data-message').style.display = 'none';
 
         sales.forEach(sale => {
-            const row = document.createElement('tr');
-            const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total);
+            // Determine if it's an invoice type or legacy
+            const isInvoice = sale.type === 'invoice';
+            const itemCount = isInvoice && sale.items ? sale.items.length : 1;
 
-            // Handle legacy data (simple structure) vs new invoice structure
-            let productDisplay = sale.producto;
-            let qtyDisplay = sale.cantidad;
+            // --- Main Row ---
+            const tr = document.createElement('tr');
+            tr.className = 'sale-row';
+            tr.dataset.id = sale.id; // Ensure ID is accessible
 
-            if (sale.items && Array.isArray(sale.items)) {
-                if (sale.items.length > 1) {
-                    productDisplay = `${sale.items[0].producto} (+${sale.items.length - 1})`;
-                } else if (sale.items.length === 1) {
-                    productDisplay = sale.items[0].producto;
-                }
-                // Sum quantities for display or just show '-'
-                qtyDisplay = sale.items.reduce((acc, item) => acc + item.cantidad, 0);
+            // Format Date
+            // Handle both Firestore Timestamp and string dates (legacy)
+            let dateStr = sale.fecha;
+            if (sale.timestamp && typeof sale.timestamp.toDate === 'function') {
+                dateStr = sale.timestamp.toDate().toLocaleDateString('es-PE');
             }
 
-            row.innerHTML = `
-                <td>${sale.fecha}</td>
-                <td>${sale.cliente}</td>
-                <td>${productDisplay || '-'}</td>
-                <td>${qtyDisplay || '-'}</td>
-                <td>${totalFormatted}</td>
-                <td><span class="status-badge status-${sale.pago}">${sale.pago}</span></td>
-                <td style="font-size: 0.8em; color: #666;">${sale.createdBy || 'Anon'}</td>
+            // Product Summary
+            let productSummary = '';
+            if (isInvoice && sale.items && sale.items.length > 0) {
+                productSummary = `${sale.items[0].producto} <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
+            } else {
+                productSummary = sale.producto || 'Producto desconocido';
+            }
+
+            // Total Formatting
+            const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total || 0);
+
+            tr.innerHTML = `
+                <td><i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td>
+                <td>${sale.cliente || 'Cliente General'}</td>
+                <td>${productSummary}</td>
+                <td>${itemCount}</td>
+                <td style="font-weight: bold; color: var(--primary-color);">${totalFormatted}</td>
+                <td><span class="status-badge status-${(sale.pago || 'efectivo').toLowerCase()}">${(sale.pago || 'Efectivo').toUpperCase()}</span></td>
+                <td style="font-size: 0.85em; color: #888;">${sale.createdBy || 'N/A'}</td>
                 <td>
-                    <button class="btn-delete" data-id="${sale.id}" style="background:none; border:none; color: #ff4444; cursor:pointer;">
+                    <button class="btn-delete" data-id="${sale.id}" style="background:none; border:none; color: #ff4444; cursor:pointer;" title="Eliminar">
                         <i class="ph ph-trash" style="font-size: 1.2rem;"></i>
                     </button>
                 </td>
             `;
-            salesTableBody.appendChild(row);
+
+            // --- Detail Row (Hidden by default) ---
+            const trDetail = document.createElement('tr');
+            trDetail.className = 'detail-row';
+            trDetail.id = `detail-${sale.id}`;
+
+            let detailsHtml = '';
+            if (isInvoice && sale.items) {
+                detailsHtml = `
+                    <div class="detail-content">
+                        <table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Medida</th>
+                                    <th>Cant.</th>
+                                    <th>P. Unit</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sale.items.map(item => `
+                                    <tr>
+                                        <td>${item.producto}</td>
+                                        <td>${item.unidad}</td>
+                                        <td>${item.cantidad}</td>
+                                        <td>S/ ${parseFloat(item.precio_unit).toFixed(2)}</td>
+                                        <td>S/ ${parseFloat(item.total).toFixed(2)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 10px; text-align: right; font-size: 0.9rem; color: #aaa;">
+                            <strong>Subtotal:</strong> S/ ${(parseFloat(sale.subtotal) || 0).toFixed(2)} | 
+                            <strong>IGV:</strong> S/ ${(parseFloat(sale.igv) || 0).toFixed(2)}
+                        </div>
+                    </div>
+                `;
+            } else {
+                detailsHtml = `
+                    <div class="detail-content">
+                        <p><em>Venta simple (sin detalle de ítems)</em></p>
+                        <p>Producto: ${sale.producto}</p>
+                        <p>Cantidad: ${sale.cantidad}</p>
+                    </div>
+                `;
+            }
+
+            trDetail.innerHTML = `<td colspan="8">${detailsHtml}</td>`;
+
+            // Add Click Event to Toggle
+            tr.addEventListener('click', (e) => {
+                // Don't expand if clicking delete button
+                if (e.target.closest('.btn-delete')) return;
+
+                tr.classList.toggle('expanded');
+                const detailRow = document.getElementById(`detail-${sale.id}`);
+
+                if (detailRow.classList.contains('active')) {
+                    detailRow.classList.remove('active');
+                } else {
+                    // Optional: Close other open rows
+                    document.querySelectorAll('.detail-row.active').forEach(row => {
+                        row.classList.remove('active');
+                        const prevId = row.id.replace('detail-', '');
+                        const prevTr = document.querySelector(`tr[data-id="${prevId}"]`);
+                        if (prevTr) prevTr.classList.remove('expanded');
+                    });
+                    detailRow.classList.add('active');
+                }
+            });
+
+            salesTableBody.appendChild(tr);
+            salesTableBody.appendChild(trDetail);
         });
 
-        // Add delete listeners
+        // Re-attach delete listeners
         document.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                if (confirm('¿Eliminar venta? Esta acción no se puede deshacer.')) {
-                    const id = e.currentTarget.getAttribute('data-id');
+                e.stopPropagation(); // Prevent row expansion
+                if (confirm('¿Estás seguro de eliminar esta venta?')) {
+                    const id = e.currentTarget.dataset.id;
                     try {
                         await deleteDoc(doc(db, "ventas", id));
+                        // Table updates automatically via onSnapshot
                     } catch (error) {
                         console.error("Error deleting document: ", error);
-                        alert("Error al eliminar: " + error.message);
+                        alert("Error al eliminar la venta");
                     }
                 }
             });
         });
     }
+    salesTableBody.appendChild(row);
+});
 
-    function updateStats(sales) {
-        document.getElementById('total-sales-count').textContent = sales.length;
-        const total = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-        document.getElementById('total-revenue').textContent = total.toFixed(2);
+// Add delete listeners
+document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        if (confirm('¿Eliminar venta? Esta acción no se puede deshacer.')) {
+            const id = e.currentTarget.getAttribute('data-id');
+            try {
+                await deleteDoc(doc(db, "ventas", id));
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                alert("Error al eliminar: " + error.message);
+            }
+        }
+    });
+});
     }
 
-    // --- Export & WhatsApp ---
-    window.copyForWhatsApp = function () {
-        const today = new Date().toISOString().split('T')[0];
-        const todaysSales = currentSales.filter(s => s.fecha === today);
+function updateStats(sales) {
+    document.getElementById('total-sales-count').textContent = sales.length;
+    const total = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+    document.getElementById('total-revenue').textContent = total.toFixed(2);
+}
 
-        if (todaysSales.length === 0) {
-            alert("No hay ventas con fecha de hoy (" + today + ") para reportar.");
-            return;
+// --- Export & WhatsApp ---
+window.copyForWhatsApp = function () {
+    const today = new Date().toISOString().split('T')[0];
+    const todaysSales = currentSales.filter(s => s.fecha === today);
+
+    if (todaysSales.length === 0) {
+        alert("No hay ventas con fecha de hoy (" + today + ") para reportar.");
+        return;
+    }
+
+    let msg = `*REPORTE PLASTIMARKET (${today})*\n\n`;
+    let total = 0;
+    todaysSales.forEach(s => {
+        if (s.items) {
+            s.items.forEach(item => {
+                msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad})\n`;
+            });
+        } else {
+            msg += `📦 ${s.producto} x${s.cantidad}\n`;
         }
+        msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
+        msg += `----------------\n`;
+        total += s.total;
+    });
+    msg += `\n*TOTAL: S/ ${total.toFixed(2)}*`;
 
-        let msg = `*REPORTE PLASTIMARKET (${today})*\n\n`;
-        let total = 0;
-        todaysSales.forEach(s => {
-            if (s.items) {
-                s.items.forEach(item => {
-                    msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad})\n`;
-                });
-            } else {
-                msg += `📦 ${s.producto} x${s.cantidad}\n`;
-            }
-            msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
-            msg += `----------------\n`;
-            total += s.total;
-        });
-        msg += `\n*TOTAL: S/ ${total.toFixed(2)}*`;
+    navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
+};
 
-        navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
-    };
+window.exportToCSV = function () {
+    if (currentSales.length === 0) return alert("Sin datos para exportar");
 
-    window.exportToCSV = function () {
-        if (currentSales.length === 0) return alert("Sin datos para exportar");
+    let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Unidad,PrecioUnit,TotalItem,TotalVenta,Pago,Vendedor\n";
 
-        let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Unidad,PrecioUnit,TotalItem,TotalVenta,Pago,Vendedor\n";
+    currentSales.forEach(s => {
+        if (s.items && s.items.length > 0) {
+            s.items.forEach(item => {
+                csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+            });
+        } else {
+            // Legacy support
+            csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},UND,${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+        }
+    });
 
-        currentSales.forEach(s => {
-            if (s.items && s.items.length > 0) {
-                s.items.forEach(item => {
-                    csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
-                });
-            } else {
-                // Legacy support
-                csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},UND,${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
-            }
-        });
+    const link = document.createElement("a");
+    link.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
+    link.download = "ventas_plastimarket_detalle.csv";
+    link.click();
+};
 
-        const link = document.createElement("a");
-        link.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
-        link.download = "ventas_plastimarket_detalle.csv";
-        link.click();
-    };
-
-    // Start Auth Check
-    checkAuth();
+// Start Auth Check
+checkAuth();
 });
