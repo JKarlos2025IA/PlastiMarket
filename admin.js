@@ -17,7 +17,7 @@ import {
     getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-console.log("PlastiMarket Admin Loaded (Firebase Integrated)");
+console.log("PlastiMarket Admin Loaded (Invoice Mode)");
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -32,6 +32,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sections = document.querySelectorAll('.dashboard-section');
     const dateInput = document.getElementById('fecha');
     const loginError = document.getElementById('login-error');
+
+    // Invoice Elements
+    const btnSearchRuc = document.getElementById('btn-search-ruc');
+    const inputDocumento = document.getElementById('documento');
+    const inputCliente = document.getElementById('cliente');
+    const itemsBody = document.getElementById('invoice-items-body');
+    const btnAddItem = document.getElementById('btn-add-item');
+    const lblSubtotal = document.getElementById('lbl-subtotal');
+    const lblIgv = document.getElementById('lbl-igv');
+    const lblTotal = document.getElementById('lbl-total');
 
     // Filter Elements
     const filterDateStart = document.getElementById('filter-date-start');
@@ -76,6 +86,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         loginView.style.display = 'none';
         dashboardView.style.display = 'flex';
         subscribeToSales();
+        // Initialize with one empty row
+        if (itemsBody && itemsBody.children.length === 0) {
+            addInvoiceRow();
+        }
     }
 
     // Login Form
@@ -114,7 +128,127 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // --- Sales Logic ---
+    // --- Invoice Logic ---
+
+    // RUC Lookup (Simulation)
+    btnSearchRuc.addEventListener('click', async () => {
+        const ruc = inputDocumento.value;
+        if (ruc.length !== 11) {
+            alert("El RUC debe tener 11 dígitos");
+            return;
+        }
+
+        // Simulate API delay
+        btnSearchRuc.disabled = true;
+        btnSearchRuc.innerHTML = '<i class="ph ph-spinner ph-spin"></i>';
+
+        setTimeout(() => {
+            // Mock Data
+            const mockNames = [
+                "PLASTICOS DEL SUR S.A.C.",
+                "DISTRIBUIDORA COMERCIAL LIMA E.I.R.L.",
+                "INVERSIONES GENERALES PERU S.A.",
+                "CORPORACION DE EMPAQUES S.A.C."
+            ];
+            const randomName = mockNames[Math.floor(Math.random() * mockNames.length)];
+
+            inputCliente.value = randomName;
+
+            btnSearchRuc.disabled = false;
+            btnSearchRuc.innerHTML = '<i class="ph ph-magnifying-glass"></i>';
+        }, 800);
+    });
+
+    // Add Row
+    btnAddItem.addEventListener('click', () => {
+        addInvoiceRow();
+    });
+
+    function addInvoiceRow() {
+        const row = document.createElement('tr');
+        const rowCount = itemsBody.children.length + 1;
+
+        row.innerHTML = `
+            <td>${rowCount}</td>
+            <td>
+                <select class="item-product" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="Bolsa Blanca 16x24">Bolsa Blanca 16x24</option>
+                    <option value="Bolsa Blanca 20x30">Bolsa Blanca 20x30</option>
+                    <option value="Bolsa Cristal 10x15">Bolsa Cristal 10x15</option>
+                    <option value="Manga Industrial">Manga Industrial</option>
+                    <option value="Descartables">Descartables</option>
+                    <option value="Otros">Otros</option>
+                </select>
+            </td>
+            <td>
+                <select class="item-unit">
+                    <option value="UND">UND</option>
+                    <option value="KG">KG</option>
+                    <option value="MILLAR">MILLAR</option>
+                    <option value="PAQ">PAQ</option>
+                </select>
+            </td>
+            <td><input type="number" class="item-qty" value="1" min="1" required></td>
+            <td><input type="number" class="item-price" value="0.00" step="0.01" min="0" required></td>
+            <td><input type="text" class="item-total" value="0.00" readonly style="background: #f9f9f9;"></td>
+            <td>
+                ${rowCount > 1 ? '<button type="button" class="btn-remove-item"><i class="ph ph-trash"></i></button>' : ''}
+            </td>
+        `;
+
+        itemsBody.appendChild(row);
+        attachRowEvents(row);
+    }
+
+    function attachRowEvents(row) {
+        const qtyInput = row.querySelector('.item-qty');
+        const priceInput = row.querySelector('.item-price');
+        const removeBtn = row.querySelector('.btn-remove-item');
+
+        const updateRowTotal = () => {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            const total = qty * price;
+            row.querySelector('.item-total').value = total.toFixed(2);
+            calculateInvoiceTotals();
+        };
+
+        qtyInput.addEventListener('input', updateRowTotal);
+        priceInput.addEventListener('input', updateRowTotal);
+
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                row.remove();
+                calculateInvoiceTotals();
+                // Re-index rows
+                Array.from(itemsBody.children).forEach((r, index) => {
+                    r.firstElementChild.textContent = index + 1;
+                });
+            });
+        }
+    }
+
+    function calculateInvoiceTotals() {
+        let subtotal = 0;
+        const rows = itemsBody.querySelectorAll('tr');
+
+        rows.forEach(row => {
+            const total = parseFloat(row.querySelector('.item-total').value) || 0;
+            subtotal += total;
+        });
+
+        const igv = subtotal * 0.18;
+        const total = subtotal + igv;
+
+        lblSubtotal.textContent = `S/ ${subtotal.toFixed(2)}`;
+        lblIgv.textContent = `S/ ${igv.toFixed(2)}`;
+        lblTotal.textContent = `S/ ${total.toFixed(2)}`;
+
+        return { subtotal, igv, total };
+    }
+
+    // --- Sales Logic (Save) ---
 
     salesForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -122,36 +256,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = true;
         btn.textContent = 'Guardando...';
 
+        // Gather Items
+        const items = [];
+        itemsBody.querySelectorAll('tr').forEach(row => {
+            items.push({
+                producto: row.querySelector('.item-product').value,
+                unidad: row.querySelector('.item-unit').value,
+                cantidad: parseFloat(row.querySelector('.item-qty').value),
+                precio_unit: parseFloat(row.querySelector('.item-price').value),
+                total: parseFloat(row.querySelector('.item-total').value)
+            });
+        });
+
+        const totals = calculateInvoiceTotals();
+
         const newSale = {
             fecha: document.getElementById('fecha').value,
             cliente: document.getElementById('cliente').value,
             documento: document.getElementById('documento').value,
-            producto: document.getElementById('producto').value,
-            cantidad: parseInt(document.getElementById('cantidad').value),
-            total: parseFloat(document.getElementById('precio').value),
+            items: items,
+            subtotal: totals.subtotal,
+            igv: totals.igv,
+            total: totals.total,
             pago: document.getElementById('pago').value,
             timestamp: new Date().toISOString(),
-            createdBy: auth.currentUser ? auth.currentUser.email : 'unknown'
+            createdBy: auth.currentUser ? auth.currentUser.email : 'unknown',
+            type: 'invoice' // Mark as invoice type
         };
 
         try {
             await addDoc(salesCollection, newSale);
+
+            // Reset Form
             salesForm.reset();
             document.getElementById('fecha').valueAsDate = new Date();
+            itemsBody.innerHTML = '';
+            addInvoiceRow(); // Add one empty row
+            calculateInvoiceTotals(); // Reset totals
+
             alert("Venta registrada exitosamente");
         } catch (error) {
             console.error("Error adding document: ", error);
             alert("Error al guardar: " + error.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = 'REGISTRAR VENTA';
+            btn.innerHTML = '<i class="ph ph-floppy-disk"></i> GUARDAR VENTA';
         }
     });
 
     function subscribeToSales() {
-        if (unsubscribeSales) return; // Already subscribed
+        if (unsubscribeSales) return;
 
-        // Default query: Order by timestamp desc
         const q = query(salesCollection, orderBy("timestamp", "desc"));
 
         unsubscribeSales = onSnapshot(q, (snapshot) => {
@@ -164,9 +319,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateStats(sales);
         }, (error) => {
             console.error("Error getting documents: ", error);
-            if (error.code === 'permission-denied') {
-                alert("Permisos insuficientes para ver las ventas.");
-            }
         });
     }
 
@@ -218,11 +370,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             const row = document.createElement('tr');
             const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total);
 
+            // Handle legacy data (simple structure) vs new invoice structure
+            let productDisplay = sale.producto;
+            let qtyDisplay = sale.cantidad;
+
+            if (sale.items && Array.isArray(sale.items)) {
+                if (sale.items.length > 1) {
+                    productDisplay = `${sale.items[0].producto} (+${sale.items.length - 1})`;
+                } else if (sale.items.length === 1) {
+                    productDisplay = sale.items[0].producto;
+                }
+                // Sum quantities for display or just show '-'
+                qtyDisplay = sale.items.reduce((acc, item) => acc + item.cantidad, 0);
+            }
+
             row.innerHTML = `
                 <td>${sale.fecha}</td>
                 <td>${sale.cliente}</td>
-                <td>${sale.producto}</td>
-                <td>${sale.cantidad}</td>
+                <td>${productDisplay || '-'}</td>
+                <td>${qtyDisplay || '-'}</td>
                 <td>${totalFormatted}</td>
                 <td><span class="status-badge status-${sale.pago}">${sale.pago}</span></td>
                 <td style="font-size: 0.8em; color: #666;">${sale.createdBy || 'Anon'}</td>
@@ -258,14 +424,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Export & WhatsApp ---
-    // Attach to window so they can be called from HTML onclick (though event listeners are better)
-    // Since we are in a module, functions are not global by default.
-    // We need to attach them to window explicitly if we keep the onclick in HTML.
-
     window.copyForWhatsApp = function () {
         const today = new Date().toISOString().split('T')[0];
-        // Use current filtered view or just today's sales? 
-        // Usually daily report implies "today's sales".
         const todaysSales = currentSales.filter(s => s.fecha === today);
 
         if (todaysSales.length === 0) {
@@ -276,7 +436,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         let msg = `*REPORTE PLASTIMARKET (${today})*\n\n`;
         let total = 0;
         todaysSales.forEach(s => {
-            msg += `📦 ${s.producto} x${s.cantidad}\n`;
+            if (s.items) {
+                s.items.forEach(item => {
+                    msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad})\n`;
+                });
+            } else {
+                msg += `📦 ${s.producto} x${s.cantidad}\n`;
+            }
             msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
             msg += `----------------\n`;
             total += s.total;
@@ -287,23 +453,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.exportToCSV = function () {
-        // Export currently visible (filtered) sales
-        // We need to access the sales currently in the table, or just use currentSales if no filter applied.
-        // For simplicity, let's export currentSales (which is all loaded sales). 
-        // Or better, let's export what is currently filtered. 
-        // But the filter logic is inside the event listener. 
-        // Let's just export currentSales for now.
-
         if (currentSales.length === 0) return alert("Sin datos para exportar");
 
-        let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Total,Pago,RegistradoPor\n";
+        let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Unidad,PrecioUnit,TotalItem,TotalVenta,Pago,Vendedor\n";
+
         currentSales.forEach(s => {
-            csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},${s.total},${s.pago},${s.createdBy || ''}\n`;
+            if (s.items && s.items.length > 0) {
+                s.items.forEach(item => {
+                    csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+                });
+            } else {
+                // Legacy support
+                csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},UND,${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+            }
         });
 
         const link = document.createElement("a");
         link.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
-        link.download = "ventas_plastimarket.csv";
+        link.download = "ventas_plastimarket_detalle.csv";
         link.click();
     };
 

@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="admin.css?v=2">
 </head>
 
 <body>
@@ -58,70 +58,91 @@
                 <button class="tab-btn" data-tab="history">Historial de Ventas</button>
             </div>
 
-            <!-- New Sale Section -->
+            <!-- New Sale Section (Invoice Mode) -->
             <div id="new-sale" class="dashboard-section active">
-                <h2 class="section-title">Nueva Venta</h2>
-                <form id="sales-form" class="sales-form">
-                    <div class="form-grid">
-                        <!-- Fecha -->
-                        <div class="form-group">
-                            <label for="fecha">Fecha</label>
-                            <input type="date" id="fecha" required>
-                        </div>
-
-                        <!-- Cliente -->
-                        <div class="form-group">
-                            <label for="cliente">Cliente</label>
-                            <input type="text" id="cliente" placeholder="Nombre del Cliente" required>
-                        </div>
-
-                        <!-- Documento -->
-                        <div class="form-group">
-                            <label for="documento">RUC / DNI</label>
-                            <input type="text" id="documento" placeholder="Número de Documento">
-                        </div>
-
-                        <!-- Producto -->
-                        <div class="form-group">
-                            <label for="producto">Producto</label>
-                            <select id="producto" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="Bolsa Blanca 16x24">Bolsa Blanca 16x24</option>
-                                <option value="Bolsa Blanca 20x30">Bolsa Blanca 20x30</option>
-                                <option value="Bolsa Cristal 10x15">Bolsa Cristal 10x15</option>
-                                <option value="Manga Industrial">Manga Industrial</option>
-                                <option value="Descartables">Descartables</option>
-                                <option value="Otros">Otros</option>
-                            </select>
-                        </div>
-
-                        <!-- Cantidad -->
-                        <div class="form-group">
-                            <label for="cantidad">Cantidad</label>
-                            <input type="number" id="cantidad" placeholder="1" min="1" required>
-                        </div>
-
-                        <!-- Precio Total -->
-                        <div class="form-group">
-                            <label for="precio">Precio Total (S/)</label>
-                            <input type="number" id="precio" placeholder="0.00" step="0.10" min="0" required>
-                        </div>
-
-                        <!-- Pago -->
-                        <div class="form-group">
-                            <label for="pago">Método de Pago</label>
-                            <select id="pago" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="efectivo">Efectivo</option>
-                                <option value="yape">Yape</option>
-                                <option value="plin">Plin</option>
-                                <option value="transferencia">Transferencia</option>
-                            </select>
+                <form id="sales-form" class="sales-form invoice-mode">
+                    <!-- Parte 1: Cabecera -->
+                    <div class="invoice-header card-panel">
+                        <h3 class="panel-title">Datos del Cliente</h3>
+                        <div class="form-grid-invoice">
+                            <div class="form-group">
+                                <label>Fecha de Emisión</label>
+                                <input type="date" id="fecha" required>
+                            </div>
+                            <div class="form-group">
+                                <label>RUC / DNI</label>
+                                <div class="input-group">
+                                    <input type="text" id="documento" placeholder="Ingrese 11 dígitos" maxlength="11">
+                                    <button type="button" id="btn-search-ruc" class="btn-icon" title="Buscar RUC"><i
+                                            class="ph ph-magnifying-glass"></i></button>
+                                </div>
+                            </div>
+                            <div class="form-group span-2">
+                                <label>Razón Social / Nombre</label>
+                                <input type="text" id="cliente" placeholder="Nombre del cliente" required>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="margin-top: 2rem; text-align: right;">
-                        <button type="submit" class="btn btn-primary">REGISTRAR VENTA</button>
+                    <!-- Parte 2: Detalle de Ítems -->
+                    <div class="invoice-body card-panel">
+                        <h3 class="panel-title">Detalle de Venta</h3>
+                        <div class="table-responsive">
+                            <table id="invoice-items-table" class="invoice-table">
+                                <thead>
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="35%">Producto</th>
+                                        <th width="10%">Medida</th>
+                                        <th width="10%">Cant.</th>
+                                        <th width="15%">P. Unit (S/)</th>
+                                        <th width="15%">Total (S/)</th>
+                                        <th width="10%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoice-items-body">
+                                    <!-- Rows added dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" id="btn-add-item" class="btn btn-secondary btn-sm">
+                            <i class="ph ph-plus"></i> Agregar Ítem
+                        </button>
+                    </div>
+
+                    <!-- Parte 3: Totales y Pago -->
+                    <div class="invoice-footer card-panel">
+                        <div class="invoice-totals-grid">
+                            <div class="payment-info">
+                                <label>Método de Pago</label>
+                                <select id="pago" required>
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="yape">Yape</option>
+                                    <option value="plin">Plin</option>
+                                    <option value="transferencia">Transferencia</option>
+                                </select>
+                            </div>
+                            <div class="totals-info">
+                                <div class="total-row">
+                                    <span>Subtotal:</span>
+                                    <span id="lbl-subtotal">S/ 0.00</span>
+                                </div>
+                                <div class="total-row">
+                                    <span>IGV (18%):</span>
+                                    <span id="lbl-igv">S/ 0.00</span>
+                                </div>
+                                <div class="total-row main-total">
+                                    <span>TOTAL:</span>
+                                    <span id="lbl-total">S/ 0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="ph ph-floppy-disk"></i> GUARDAR VENTA
+                        </button>
                     </div>
                 </form>
             </div>
@@ -181,6 +202,20 @@
                 <div class="table-container">
                     <table id="sales-table">
                         <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Producto</th>
+                                <th>Cant.</th>
+                                <th>Total</th>
+                                <th>Pago</th>
+                                <th>Vendedor</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows will be populated by JS -->
+                        </tbody>
                     </table>
                     <div id="no-data-message" style="display: none; text-align: center; padding: 20px; color: #888;">
                         No hay ventas registradas.
@@ -192,7 +227,7 @@
     </div>
 
     <!-- Firebase SDKs are now imported in admin.js -->
-    <script src="admin.js" type="module"></script>
+    <script src="admin.js?v=2" type="module"></script>
 </body>
 
 </html>
