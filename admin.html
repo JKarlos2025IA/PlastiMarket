@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="admin.css?v=5">
+    <link rel="stylesheet" href="admin.css?v=4">
 </head>
 
 <body>
@@ -99,8 +99,28 @@
                                         <th width="15%">Total (S/)</th>
                                         <th width="10%"></th>
                                     </tr>
-                                    <div class="totals-label total-final">TOTAL:</div>
-                                    <div class="totals-value total-final" id="lbl-total">S/ 0.00</div>
+                                </thead>
+                                <tbody id="invoice-items-body">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="add-item-container">
+                            <button type="button" id="btn-add-item" class="btn-icon-only" title="Agregar Ítem">
+                                <i class="ph ph-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Parte 3: Totales y Pago -->
+                    <div class="invoice-footer card-panel">
+                        <div class="totals-grid">
+                            <div class="totals-label">Subtotal:</div>
+                            <div class="totals-value" id="lbl-subtotal">S/ 0.00</div>
+                            <div class="totals-label">IGV (18%):</div>
+                            <div class="totals-value" id="lbl-igv">S/ 0.00</div>
+                            <div class="totals-label total-final">TOTAL:</div>
+                            <div class="totals-value total-final" id="lbl-total">S/ 0.00</div>
                         </div>
                         <div class="payment-section">
                             <div class="form-group">
@@ -177,69 +197,304 @@
                             <button onclick="copyForWhatsApp()" class="btn-whatsapp"><i class="ph ph-whatsapp-logo"></i>
                                 Copiar Reporte</button>
                             <button onclick="exportToCSV()" class="btn-outline"><i class="ph ph-download-simple"></i>
-                                Exportar CSV</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                <meta charset="UTF-8" />
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                                <title>PlastiMarket | Administración</title>
+                                <link rel="preconnect" href="https://fonts.googleapis.com">
+                                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                                <link
+                                    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+                                    rel="stylesheet">
+                                <script src="https://unpkg.com/@phosphor-icons/web"></script>
+                                <link rel="stylesheet" href="admin.css?v=4">
+                                </head>
 
-            <!-- Side Drawer for Adding Items -->
-            <div id="drawer-overlay" class="drawer-overlay"></div>
-            <div id="item-drawer" class="side-drawer">
-                <div class="drawer-header">
-                    <h3>Agregar Ítem</h3>
-                    <button id="btn-close-drawer" class="btn-icon"><i class="ph ph-x"></i></button>
-                </div>
-                <div class="drawer-body">
-                    <form id="drawer-form">
-                        <div class="form-group">
-                            <label>Tipo</label>
-                            <div class="radio-group">
-                                <label><input type="radio" name="tipo" value="bien" checked> Bien</label>
-                                <label><input type="radio" name="tipo" value="servicio"> Servicio</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Código (Opcional)</label>
-                            <input type="text" id="item-codigo" placeholder="Ej. P001">
-                        </div>
-                        <div class="form-group">
-                            <label>Descripción</label>
-                            <textarea id="item-descripcion" rows="3" placeholder="Descripción del producto o servicio"
-                                required></textarea>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Cantidad</label>
-                                <input type="number" id="item-cantidad" value="1" min="1" step="0.01" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Unidad</label>
-                                <select id="item-unidad">
-                                    <option value="NIU">UNIDAD (NIU)</option>
-                                    <option value="KG">KILOGRAMOS (KG)</option>
-                                    <option value="MTR">METROS (MTR)</option>
-                                    <option value="LTR">LITROS (LTR)</option>
-                                    <option value="ZZ">SERVICIO (ZZ)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Precio Unitario (S/)</label>
-                                <input type="number" id="item-precio" value="0.00" min="0" step="0.01" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Impuesto</label>
-                                <select id="item-impuesto">
-                                    <option value="18">IGV (18%)</option>
-                                    <option value="0">Exonerado (0%)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="drawer-total">
-                            <!-- Firebase SDKs are now imported in admin.js -->
-                            <script src="admin.js?v=13" type="module"></script>
-</body>
+                                <body>
+
+                                    <!-- Login View -->
+                                    <div id="login-view">
+                                        <div class="login-card">
+                                            <div class="logo" style="margin-bottom: 1.5rem;">
+                                                <span class="logo-text"
+                                                    style="font-size: 2rem; color: white; font-weight: bold;">PLASTI<span
+                                                        style="color: #00bcd4;">MARKET</span></span>
+                                            </div>
+                                            <h2 style="color: #ccc; margin-bottom: 20px;">Acceso Administrativo</h2>
+                                            <form id="login-form">
+                                                <div class="form-group">
+                                                    <input type="email" id="admin-email"
+                                                        placeholder="Correo Electrónico" required autocomplete="email">
+                                                </div>
+                                                <div class="form-group">
+                                                    <input type="password" id="admin-password" placeholder="Contraseña"
+                                                        required autocomplete="current-password">
+                                                </div>
+                                                <button type="submit" class="btn btn-primary"
+                                                    style="width: 100%;">INGRESAR</button>
+                                                <p id="login-error"
+                                                    style="color: #ff4444; margin-top: 1rem; display: none;"></p>
+                                            </form>
+                                            <div style="margin-top: 2rem;">
+                                                <a href="index.html" class="btn btn-outline"
+                                                    style="font-size: 0.8rem; color: #888; text-decoration: none;">Volver
+                                                    al Inicio</a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Dashboard View -->
+                                    <div id="dashboard-view">
+                                        <header class="admin-header">
+                                            <div class="logo">
+                                                <span class="logo-text"
+                                                    style="color: white; font-weight: bold; font-size: 1.5rem;">PLASTI<span
+                                                        style="color: #00bcd4;">ADMIN</span></span>
+                                            </div>
+                                            <button id="logout-btn" class="btn btn-outline">
+                                                <i class="ph ph-sign-out"></i> Cerrar Sesión
+                                            </button>
+                                        </header>
+
+                                        <div class="admin-content">
+                                            <div class="dashboard-tabs">
+                                                <button class="tab-btn active" data-tab="new-sale">Registrar
+                                                    Venta</button>
+                                                <button class="tab-btn" data-tab="history">Historial de Ventas</button>
+                                            </div>
+
+                                            <!-- New Sale Section (Invoice Mode) -->
+                                            <div id="new-sale" class="dashboard-section active">
+                                                <form id="sales-form" class="sales-form invoice-mode">
+                                                    <!-- Parte 1: Cabecera -->
+                                                    <div class="invoice-header card-panel">
+                                                        <h3 class="panel-title">Datos del Cliente</h3>
+                                                        <div class="form-grid-invoice">
+                                                            <div class="form-group">
+                                                                <label>Fecha de Emisión</label>
+                                                                <input type="date" id="fecha" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label>RUC / DNI</label>
+                                                                <div class="input-group">
+                                                                    <input type="text" id="documento"
+                                                                        placeholder="RUC (11) o DNI (8)" maxlength="11">
+                                                                    <button type="button" id="btn-search-ruc"
+                                                                        class="btn-icon" title="Buscar RUC/DNI"><i
+                                                                            class="ph ph-magnifying-glass"></i></button>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group span-2">
+                                                                <label>Razón Social / Nombre</label>
+                                                                <input type="text" id="cliente"
+                                                                    placeholder="Nombre del cliente" required>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Parte 2: Detalle de Ítems -->
+                                                    <div class="invoice-body card-panel">
+                                                        <h3 class="panel-title">Detalle de Venta</h3>
+                                                        <div class="table-responsive">
+                                                            <table id="invoice-items-table" class="invoice-table">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th width="5%">#</th>
+                                                                        <th width="35%">Producto</th>
+                                                                        <th width="10%">Medida</th>
+                                                                        <th width="10%">Cant.</th>
+                                                                        <th width="15%">P. Unit (S/)</th>
+                                                                        <th width="15%">Total (S/)</th>
+                                                                        <th width="10%"></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody id="invoice-items-body">
+                                                                    <!-- Dynamic Rows -->
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div class="add-item-container">
+                                                            <button type="button" id="btn-add-item"
+                                                                class="btn-icon-only" title="Agregar Ítem">
+                                                                <i class="ph ph-plus"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Parte 3: Totales y Pago -->
+                                                    <div class="invoice-footer card-panel">
+                                                        <div class="totals-grid">
+                                                            <div class="totals-label">Subtotal:</div>
+                                                            <div class="totals-value" id="lbl-subtotal">S/ 0.00</div>
+                                                            <div class="totals-label">IGV (18%):</div>
+                                                            <div class="totals-value" id="lbl-igv">S/ 0.00</div>
+                                                            <div class="totals-label total-final">TOTAL:</div>
+                                                            <div class="totals-value total-final" id="lbl-total">S/ 0.00
+                                                            </div>
+                                                        </div>
+                                                        <div class="payment-section">
+                                                            <div class="form-group">
+                                                                <label>Método de Pago</label>
+                                                                <select id="pago" required>
+                                                                    <option value="Efectivo">Efectivo</option>
+                                                                    <option value="Yape">Yape</option>
+                                                                    <option value="Plin">Plin</option>
+                                                                    <option value="Transferencia">Transferencia</option>
+                                                                    <option value="Credito">Crédito</option>
+                                                                </select>
+                                                            </div>
+                                                            <button type="submit" class="btn-primary btn-large">
+                                                                <i class="ph ph-floppy-disk"></i> GUARDAR VENTA
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+
+                                            <!-- History Section -->
+                                            <div id="history" class="dashboard-section">
+                                                <div class="card-panel">
+                                                    <div class="panel-header">
+                                                        <h3 class="panel-title">Historial de Ventas</h3>
+                                                        <div class="filters-bar">
+                                                            <input type="date" id="filter-date-start" title="Desde">
+                                                            <input type="date" id="filter-date-end" title="Hasta">
+                                                            <input type="text" id="filter-cliente"
+                                                                placeholder="Buscar cliente...">
+                                                            <select id="filter-pago">
+                                                                <option value="">Todos los pagos</option>
+                                                                <option value="Efectivo">Efectivo</option>
+                                                                <option value="Yape">Yape</option>
+                                                                <option value="Plin">Plin</option>
+                                                                <option value="Transferencia">Transferencia</option>
+                                                            </select>
+                                                            <button id="btn-apply-filters" class="btn-secondary"><i
+                                                                    class="ph ph-funnel"></i>
+                                                                Filtrar</button>
+                                                            <button id="btn-clear-filters" class="btn-outline"
+                                                                title="Limpiar"><i class="ph ph-x"></i></button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table class="data-table" id="sales-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Fecha</th>
+                                                                    <th>Cliente</th>
+                                                                    <th>Producto/Detalle</th>
+                                                                    <th>Total</th>
+                                                                    <th>Pago</th>
+                                                                    <th>Vendedor</th>
+                                                                    <th>Acciones</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <!-- JS will populate this -->
+                                                            </tbody>
+                                                        </table>
+                                                        <div id="no-data-message"
+                                                            style="display:none; text-align:center; padding: 20px; color: #888;">
+                                                            No se encontraron ventas con los filtros seleccionados.
+                                                        </div>
+                                                    </div>
+                                                    <div class="stats-bar">
+                                                        <div class="stat-item">
+                                                            <span>Ventas Totales:</span>
+                                                            <strong id="total-sales-count">0</strong>
+                                                        </div>
+                                                        <div class="stat-item">
+                                                            <span>Ingresos Totales:</span>
+                                                            <strong>S/ <span id="total-revenue">0.00</span></strong>
+                                                        </div>
+                                                        <div class="export-actions">
+                                                            <button onclick="copyForWhatsApp()" class="btn-whatsapp"><i
+                                                                    class="ph ph-whatsapp-logo"></i>
+                                                                Copiar Reporte</button>
+                                                            <button onclick="exportToCSV()" class="btn-outline"><i
+                                                                    class="ph ph-download-simple"></i>
+                                                                Exportar CSV</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Side Drawer for Adding Items -->
+                                            <div id="drawer-overlay" class="drawer-overlay"></div>
+                                            <div id="item-drawer" class="side-drawer">
+                                                <div class="drawer-header">
+                                                    <h3>Agregar Ítem</h3>
+                                                    <button id="btn-close-drawer" class="btn-icon"><i
+                                                            class="ph ph-x"></i></button>
+                                                </div>
+                                                <div class="drawer-body">
+                                                    <form id="drawer-form">
+                                                        <div class="form-group">
+                                                            <label>Tipo</label>
+                                                            <div class="radio-group">
+                                                                <label><input type="radio" name="tipo" value="bien"
+                                                                        checked> Bien</label>
+                                                                <label><input type="radio" name="tipo" value="servicio">
+                                                                    Servicio</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Código (Opcional)</label>
+                                                            <input type="text" id="item-codigo" placeholder="Ej. P001">
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Descripción</label>
+                                                            <textarea id="item-descripcion" rows="3"
+                                                                placeholder="Descripción del producto o servicio"
+                                                                required></textarea>
+                                                        </div>
+                                                        <div class="form-row">
+                                                            <div class="form-group">
+                                                                <label>Cantidad</label>
+                                                                <input type="number" id="item-cantidad" value="1"
+                                                                    min="1" step="0.01" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label>Unidad</label>
+                                                                <select id="item-unidad">
+                                                                    <option value="NIU">UNIDAD (NIU)</option>
+                                                                    <option value="KG">KILOGRAMOS (KG)</option>
+                                                                    <option value="MTR">METROS (MTR)</option>
+                                                                    <option value="LTR">LITROS (LTR)</option>
+                                                                    <option value="ZZ">SERVICIO (ZZ)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-row">
+                                                            <div class="form-group">
+                                                                <label>Precio Unitario (S/)</label>
+                                                                <input type="number" id="item-precio" value="0.00"
+                                                                    min="0" step="0.01" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label>Impuesto</label>
+                                                                <select id="item-impuesto">
+                                                                    <option value="18">IGV (18%)</option>
+                                                                    <option value="0">Exonerado (0%)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="drawer-total">
+                                                            <span>Total Ítem:</span>
+                                                            <strong id="item-total-display">S/ 0.00</strong>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="drawer-footer">
+                                                    <button type="button" id="btn-drawer-add"
+                                                        class="btn-primary btn-block">
+                                                        <i class="ph ph-plus-circle"></i> AGREGAR
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <!-- Firebase SDKs are now imported in admin.js -->
+                                    <script src="admin.js?v=13" type="module"></script>
+                                </body>
 
 </html>
