@@ -181,19 +181,6 @@
                 <div class="table-container">
                     <table id="sales-table">
                         <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Cliente</th>
-                                <th>Producto</th>
-                                <th>Cant.</th>
-                                <th>Total</th>
-                                <th>Pago</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Rows will be populated by JS -->
-                        </tbody>
                     </table>
                     <div id="no-data-message" style="display: none; text-align: center; padding: 20px; color: #888;">
                         No hay ventas registradas.
@@ -204,18 +191,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs (Ready for configuration) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        window.firebaseModules = {
-            initializeApp,
-            getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, onSnapshot,
-            getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut
-        };
-    </script>
+    <!-- Firebase SDKs are now imported in admin.js -->
     <script src="admin.js" type="module"></script>
 </body>
 

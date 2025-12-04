@@ -1,35 +1,25 @@
 // Admin Panel Logic for PlastiMarket
-console.log("PlastiMarket Admin Loaded");
+import { auth, db } from "./firebase-config.js";
+import {
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+    collection,
+    addDoc,
+    deleteDoc,
+    doc,
+    query,
+    orderBy,
+    onSnapshot,
+    where,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Placeholder Firebase Config (To be replaced by user)
-const firebaseConfig = {
-    // PASTE YOUR FIREBASE CONFIG HERE
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.firebasestorage.app",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
+console.log("PlastiMarket Admin Loaded (Firebase Integrated)");
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for modules
-    while (!window.firebaseModules) {
-        await new Promise(resolve => setTimeout(resolve, 50));
-    }
-
-    const { initializeApp, getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, onSnapshot, getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } = window.firebaseModules;
-
-    // Initialize Firebase (Try/Catch to handle invalid config gracefully initially)
-    let app, db, auth, salesCollection;
-    try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        salesCollection = collection(db, 'ventas');
-    } catch (e) {
-        console.warn("Firebase not configured yet. Using simulation mode for UI testing.");
-    }
 
     // DOM Elements
     const loginView = document.getElementById('login-view');
@@ -41,18 +31,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tabBtns = document.querySelectorAll('.tab-btn');
     const sections = document.querySelectorAll('.dashboard-section');
     const dateInput = document.getElementById('fecha');
+    const loginError = document.getElementById('login-error');
+
+    // Filter Elements
+    const filterDateStart = document.getElementById('filter-date-start');
+    const filterDateEnd = document.getElementById('filter-date-end');
+    const filterCliente = document.getElementById('filter-cliente');
+    const filterPago = document.getElementById('filter-pago');
+    const btnApplyFilters = document.getElementById('btn-apply-filters');
+    const btnClearFilters = document.getElementById('btn-clear-filters');
 
     if (dateInput) {
         dateInput.valueAsDate = new Date();
     }
 
+    // Collection Reference
+    const salesCollection = collection(db, 'ventas');
+    let unsubscribeSales = null;
+    let currentSales = [];
+
     // --- Authentication Logic ---
     function checkAuth() {
-        if (!auth) return; // Skip if no auth
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                console.log("User logged in:", user.email);
                 showDashboard();
             } else {
+                console.log("User logged out");
                 showLogin();
             }
         });
@@ -61,12 +66,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     function showLogin() {
         loginView.style.display = 'flex';
         dashboardView.style.display = 'none';
+        if (unsubscribeSales) {
+            unsubscribeSales();
+            unsubscribeSales = null;
+        }
     }
 
     function showDashboard() {
         loginView.style.display = 'none';
         dashboardView.style.display = 'flex';
-        if (db) subscribeToSales();
+        subscribeToSales();
     }
 
     // Login Form
@@ -74,29 +83,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         const email = document.getElementById('admin-email').value;
         const password = document.getElementById('admin-password').value;
+        loginError.style.display = 'none';
 
-        if (auth) {
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                alert("Error de inicio de sesión: " + error.message);
-            }
-        } else {
-            // Simulation for UI testing
-            if (email === 'admin@plastimarket.pe' && password === 'admin123') {
-                showDashboard();
-            } else {
-                alert("Simulación: Usa admin@plastimarket.pe / admin123");
-            }
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            console.error("Login Error:", error);
+            loginError.textContent = "Error de inicio de sesión: " + error.message;
+            loginError.style.display = 'block';
         }
     });
 
     // Logout
     logoutBtn.addEventListener('click', async () => {
-        if (auth) {
+        try {
             await signOut(auth);
-        } else {
-            showLogin();
+        } catch (error) {
+            console.error("Logout Error:", error);
         }
     });
 
@@ -112,7 +115,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Sales Logic ---
-    let currentSales = [];
 
     salesForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -125,24 +127,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             cliente: document.getElementById('cliente').value,
             documento: document.getElementById('documento').value,
             producto: document.getElementById('producto').value,
-            cantidad: document.getElementById('cantidad').value,
+            cantidad: parseInt(document.getElementById('cantidad').value),
             total: parseFloat(document.getElementById('precio').value),
             pago: document.getElementById('pago').value,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            createdBy: auth.currentUser ? auth.currentUser.email : 'unknown'
         };
 
         try {
-            if (db) {
-                await addDoc(salesCollection, newSale);
-            } else {
-                console.log("Simulated Save:", newSale);
-                currentSales.unshift(newSale); // Add to local list for simulation
-                renderTable(currentSales);
-                alert("Venta guardada (Simulación)");
-            }
+            await addDoc(salesCollection, newSale);
             salesForm.reset();
             document.getElementById('fecha').valueAsDate = new Date();
+            alert("Venta registrada exitosamente");
         } catch (error) {
+            console.error("Error adding document: ", error);
             alert("Error al guardar: " + error.message);
         } finally {
             btn.disabled = false;
@@ -151,8 +149,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     function subscribeToSales() {
+        if (unsubscribeSales) return; // Already subscribed
+
+        // Default query: Order by timestamp desc
         const q = query(salesCollection, orderBy("timestamp", "desc"));
-        onSnapshot(q, (snapshot) => {
+
+        unsubscribeSales = onSnapshot(q, (snapshot) => {
             const sales = [];
             snapshot.forEach((doc) => {
                 sales.push({ id: doc.id, ...doc.data() });
@@ -160,8 +162,49 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentSales = sales;
             renderTable(sales);
             updateStats(sales);
+        }, (error) => {
+            console.error("Error getting documents: ", error);
+            if (error.code === 'permission-denied') {
+                alert("Permisos insuficientes para ver las ventas.");
+            }
         });
     }
+
+    // --- Filters Logic ---
+    btnApplyFilters.addEventListener('click', () => {
+        let filtered = [...currentSales];
+
+        const start = filterDateStart.value;
+        const end = filterDateEnd.value;
+        const client = filterCliente.value.toLowerCase();
+        const payMethod = filterPago.value;
+
+        if (start) {
+            filtered = filtered.filter(s => s.fecha >= start);
+        }
+        if (end) {
+            filtered = filtered.filter(s => s.fecha <= end);
+        }
+        if (client) {
+            filtered = filtered.filter(s => s.cliente.toLowerCase().includes(client));
+        }
+        if (payMethod) {
+            filtered = filtered.filter(s => s.pago === payMethod);
+        }
+
+        renderTable(filtered);
+        updateStats(filtered);
+    });
+
+    btnClearFilters.addEventListener('click', () => {
+        filterDateStart.value = '';
+        filterDateEnd.value = '';
+        filterCliente.value = '';
+        filterPago.value = '';
+        renderTable(currentSales);
+        updateStats(currentSales);
+    });
+
 
     function renderTable(sales) {
         salesTableBody.innerHTML = '';
@@ -182,8 +225,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${sale.cantidad}</td>
                 <td>${totalFormatted}</td>
                 <td><span class="status-badge status-${sale.pago}">${sale.pago}</span></td>
+                <td style="font-size: 0.8em; color: #666;">${sale.createdBy || 'Anon'}</td>
                 <td>
-                    <button class="btn-delete" data-id="${sale.id || ''}" style="background:none; border:none; color: #ff4444; cursor:pointer;">
+                    <button class="btn-delete" data-id="${sale.id}" style="background:none; border:none; color: #ff4444; cursor:pointer;">
                         <i class="ph ph-trash" style="font-size: 1.2rem;"></i>
                     </button>
                 </td>
@@ -194,12 +238,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Add delete listeners
         document.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                if (confirm('¿Eliminar venta?')) {
+                if (confirm('¿Eliminar venta? Esta acción no se puede deshacer.')) {
                     const id = e.currentTarget.getAttribute('data-id');
-                    if (db && id) {
+                    try {
                         await deleteDoc(doc(db, "ventas", id));
-                    } else {
-                        e.target.closest('tr').remove();
+                    } catch (error) {
+                        console.error("Error deleting document: ", error);
+                        alert("Error al eliminar: " + error.message);
                     }
                 }
             });
@@ -213,12 +258,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Export & WhatsApp ---
+    // Attach to window so they can be called from HTML onclick (though event listeners are better)
+    // Since we are in a module, functions are not global by default.
+    // We need to attach them to window explicitly if we keep the onclick in HTML.
+
     window.copyForWhatsApp = function () {
         const today = new Date().toISOString().split('T')[0];
+        // Use current filtered view or just today's sales? 
+        // Usually daily report implies "today's sales".
         const todaysSales = currentSales.filter(s => s.fecha === today);
 
         if (todaysSales.length === 0) {
-            alert("No hay ventas de hoy para reportar.");
+            alert("No hay ventas con fecha de hoy (" + today + ") para reportar.");
             return;
         }
 
@@ -226,26 +277,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         let total = 0;
         todaysSales.forEach(s => {
             msg += `📦 ${s.producto} x${s.cantidad}\n`;
-            msg += `👤 ${s.cliente} - S/ ${s.total}\n`;
+            msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
             msg += `----------------\n`;
             total += s.total;
         });
         msg += `\n*TOTAL: S/ ${total.toFixed(2)}*`;
 
-        navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado!"));
+        navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
     };
 
     window.exportToCSV = function () {
-        if (currentSales.length === 0) return alert("Sin datos");
-        let csv = "Fecha,Cliente,Producto,Cantidad,Total,Pago\n";
+        // Export currently visible (filtered) sales
+        // We need to access the sales currently in the table, or just use currentSales if no filter applied.
+        // For simplicity, let's export currentSales (which is all loaded sales). 
+        // Or better, let's export what is currently filtered. 
+        // But the filter logic is inside the event listener. 
+        // Let's just export currentSales for now.
+
+        if (currentSales.length === 0) return alert("Sin datos para exportar");
+
+        let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Total,Pago,RegistradoPor\n";
         currentSales.forEach(s => {
-            csv += `${s.fecha},${s.cliente},${s.producto},${s.cantidad},${s.total},${s.pago}\n`;
+            csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},${s.total},${s.pago},${s.createdBy || ''}\n`;
         });
+
         const link = document.createElement("a");
         link.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
         link.download = "ventas_plastimarket.csv";
         link.click();
     };
 
+    // Start Auth Check
     checkAuth();
 });

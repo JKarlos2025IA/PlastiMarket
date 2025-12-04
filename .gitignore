@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+*.bak
+*.log
+update_footer.js
+footer_fix.txt
+.firebase/
