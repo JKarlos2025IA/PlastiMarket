@@ -402,6 +402,158 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
 
+        function renderTable(sales) {
+            salesTableBody.innerHTML = '';
+            if (sales.length === 0) {
+                document.getElementById('no-data-message').style.display = 'block';
+                return;
+            }
+            document.getElementById('no-data-message').style.display = 'none';
+
+            sales.forEach(sale => {
+                // Determine if it's an invoice type or legacy
+                const isInvoice = sale.type === 'invoice';
+                const itemCount = isInvoice && sale.items ? sale.items.length : 1;
+
+                // --- Main Row ---
+                const tr = document.createElement('tr');
+                tr.className = 'sale-row';
+                tr.dataset.id = sale.id; // Ensure ID is accessible
+
+                // Format Date
+                let dateStr = sale.fecha;
+                if (sale.timestamp && typeof sale.timestamp.toDate === 'function') {
+                    dateStr = sale.timestamp.toDate().toLocaleDateString('es-PE');
+                }
+
+                // Product Summary
+                let productSummary = '';
+                if (isInvoice && sale.items && sale.items.length > 0) {
+                    productSummary = `${sale.items[0].producto} <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
+                } else {
+                    productSummary = sale.producto || 'Producto desconocido';
+                }
+
+                // Total Formatting
+                const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total || 0);
+
+                tr.innerHTML = `
+                <td><i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td>
+                <td>${sale.cliente || 'Cliente General'}</td>
+                <td>${productSummary}</td>
+                <td>${totalFormatted}</td>
+                <td><span class="status-badge status-${(sale.pago || 'efectivo').toLowerCase()}">${sale.pago || 'Efectivo'}</span></td>
+                <td>${sale.createdBy || 'Admin'}</td>
+                <td>
+                    <button class="btn-icon delete-btn" data-id="${sale.id}" title="Eliminar">
+                        <i class="ph ph-trash"></i>
+                    </button>
+                </td>
+            `;
+
+                // --- Detail Row (Hidden by default) ---
+                const trDetail = document.createElement('tr');
+                trDetail.className = 'detail-row';
+                trDetail.id = `detail-${sale.id}`;
+
+                let detailsHtml = `
+                <td colspan="7">
+                    <div class="detail-content">
+                        <strong>Detalle de Venta:</strong>
+                        <br><br>
+                        <table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cant.</th>
+                                    <th>Unid.</th>
+                                    <th>P.Unit</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+                if (isInvoice && sale.items) {
+                    sale.items.forEach(item => {
+                        detailsHtml += `
+                        <tr>
+                            <td>${item.producto}</td>
+                            <td>${item.cantidad}</td>
+                            <td>${item.unidad}</td>
+                            <td>S/ ${item.precio_unit.toFixed(2)}</td>
+                            <td>S/ ${item.total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                    });
+                } else {
+                    // Legacy single item
+                    detailsHtml += `
+                    <tr>
+                        <td>${sale.producto}</td>
+                        <td>${sale.cantidad}</td>
+                        <td>UND</td>
+                        <td>S/ ${(sale.total / sale.cantidad).toFixed(2)}</td>
+                        <td>S/ ${sale.total.toFixed(2)}</td>
+                    </tr>
+                `;
+                }
+
+                detailsHtml += `
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 10px; text-align: right;">
+                            <strong>Subtotal: S/ ${(sale.subtotal || (sale.total / 1.18)).toFixed(2)}</strong> | 
+                            <strong>IGV: S/ ${(sale.igv || (sale.total - (sale.total / 1.18))).toFixed(2)}</strong> | 
+                            <strong style="font-size: 1.1em; color: var(--primary-color);">TOTAL: ${totalFormatted}</strong>
+                        </div>
+                        <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
+                            RUC/DNI: ${sale.documento || '-'}
+                        </div>
+                    </div>
+                </td>
+            `;
+                trDetail.innerHTML = detailsHtml;
+
+                salesTableBody.appendChild(tr);
+                salesTableBody.appendChild(trDetail);
+
+                // --- Events ---
+
+                // Toggle Expand
+                tr.addEventListener('click', (e) => {
+                    // Ignore if clicked on delete button
+                    if (e.target.closest('.delete-btn')) return;
+
+                    const isExpanded = tr.classList.contains('expanded');
+
+                    // Collapse all others
+                    document.querySelectorAll('.sale-row').forEach(r => r.classList.remove('expanded'));
+                    document.querySelectorAll('.detail-row').forEach(r => r.classList.remove('active'));
+
+                    if (!isExpanded) {
+                        tr.classList.add('expanded');
+                        trDetail.classList.add('active');
+                    }
+                });
+
+                // Delete Action
+                const deleteBtn = tr.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation(); // Prevent row expand
+                    if (confirm('¿Estás seguro de eliminar esta venta?')) {
+                        try {
+                            await deleteDoc(doc(db, "ventas", sale.id));
+                            // UI update handled by onSnapshot
+                        } catch (error) {
+                            console.error("Error removing document: ", error);
+                            alert("Error al eliminar: " + error.message);
+                        }
+                    }
+                });
+            });
+        }
+
         function updateStats(sales) {
             document.getElementById('total-sales-count').textContent = sales.length;
             const total = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
