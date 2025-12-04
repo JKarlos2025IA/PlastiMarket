@@ -118,20 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Navigation ---
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            tabBtns.forEach(b => b.classList.remove('active'));
-            sections.forEach(s => s.classList.remove('active'));
-            btn.classList.add('active');
-            const tabId = btn.getAttribute('data-tab');
-        });
-
-        function addInvoiceRow() {
-            const row = document.createElement('tr');
-            const rowCount = itemsBody.children.length + 1;
-
-            row.innerHTML = `
-            <td>${rowCount}</td>
             <td>
                 <select class="item-product" required>
                     <option value="">Seleccionar...</option>
@@ -157,7 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <td>
                 ${rowCount > 1 ? '<button type="button" class="btn-remove-item"><i class="ph ph-trash"></i></button>' : ''}
             </td>
-        `;
+    `;
 
             itemsBody.appendChild(row);
             attachRowEvents(row);
@@ -203,9 +189,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const igv = subtotal * 0.18;
             const total = subtotal + igv;
 
-            lblSubtotal.textContent = `S/ ${subtotal.toFixed(2)}`;
-            lblIgv.textContent = `S/ ${igv.toFixed(2)}`;
-            lblTotal.textContent = `S/ ${total.toFixed(2)}`;
+            lblSubtotal.textContent = `S / ${ subtotal.toFixed(2) } `;
+            lblIgv.textContent = `S / ${ igv.toFixed(2) } `;
+            lblTotal.textContent = `S / ${ total.toFixed(2) } `;
 
             return { subtotal, igv, total };
         }
@@ -349,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Product Summary
                 let productSummary = '';
                 if (isInvoice && sale.items && sale.items.length > 0) {
-                    productSummary = `${sale.items[0].producto} <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
+                    productSummary = `${ sale.items[0].producto } <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
                 } else {
                     productSummary = sale.producto || 'Producto desconocido';
                 }
@@ -358,7 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total || 0);
 
                 tr.innerHTML = `
-                <td><i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td>
+        < td > <i class="ph ph-caret-down expand-icon"></i> ${ dateStr }</td >
                 <td>${sale.cliente || 'Cliente General'}</td>
                 <td>${productSummary}</td>
                 <td>${itemCount}</td>
@@ -370,17 +356,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <i class="ph ph-trash" style="font-size: 1.2rem;"></i>
                     </button>
                 </td>
-            `;
+    `;
 
                 // --- Detail Row (Hidden by default) ---
                 const trDetail = document.createElement('tr');
                 trDetail.className = 'detail-row';
-                trDetail.id = `detail-${sale.id}`;
+                trDetail.id = `detail - ${ sale.id } `;
 
                 let detailsHtml = '';
                 if (isInvoice && sale.items) {
                     detailsHtml = `
-                    <div class="detail-content">
+        < div class="detail-content" >
                         <table class="detail-table">
                             <thead>
                                 <tr>
@@ -407,19 +393,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <strong>Subtotal:</strong> S/ ${(parseFloat(sale.subtotal) || 0).toFixed(2)} | 
                             <strong>IGV:</strong> S/ ${(parseFloat(sale.igv) || 0).toFixed(2)}
                         </div>
-                    </div>
-                `;
+                    </div >
+        `;
                 } else {
                     detailsHtml = `
-                    <div class="detail-content">
+        < div class="detail-content" >
                         <p><em>Venta simple (sin detalle de ítems)</em></p>
                         <p>Producto: ${sale.producto}</p>
                         <p>Cantidad: ${sale.cantidad}</p>
-                    </div>
-                `;
+                    </div >
+        `;
                 }
 
-                trDetail.innerHTML = `<td colspan="8">${detailsHtml}</td>`;
+                trDetail.innerHTML = `< td colspan = "8" > ${ detailsHtml }</td > `;
 
                 // Add Click Event to Toggle
                 tr.addEventListener('click', (e) => {
@@ -427,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (e.target.closest('.btn-delete')) return;
 
                     tr.classList.toggle('expanded');
-                    const detailRow = document.getElementById(`detail-${sale.id}`);
+                    const detailRow = document.getElementById(`detail - ${ sale.id } `);
 
                     if (detailRow.classList.contains('active')) {
                         detailRow.classList.remove('active');
@@ -436,7 +422,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         document.querySelectorAll('.detail-row.active').forEach(row => {
                             row.classList.remove('active');
                             const prevId = row.id.replace('detail-', '');
-                            const prevTr = document.querySelector(`tr[data-id="${prevId}"]`);
+                            const prevTr = document.querySelector(`tr[data - id= "${prevId}"]`);
                             if (prevTr) prevTr.classList.remove('expanded');
                         });
                         detailRow.classList.add('active');
@@ -482,21 +468,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            let msg = `*REPORTE PLASTIMARKET (${today})*\n\n`;
+            let msg = `* REPORTE PLASTIMARKET(${ today }) *\n\n`;
             let total = 0;
             todaysSales.forEach(s => {
                 if (s.items) {
                     s.items.forEach(item => {
-                        msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad})\n`;
+                        msg += `📦 ${ item.producto } x${ item.cantidad } (${ item.unidad }) \n`;
                     });
                 } else {
-                    msg += `📦 ${s.producto} x${s.cantidad}\n`;
+                    msg += `📦 ${ s.producto } x${ s.cantidad } \n`;
                 }
-                msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
+                msg += `👤 ${ s.cliente } - S / ${ s.total.toFixed(2) } \n`;
                 msg += `----------------\n`;
                 total += s.total;
             });
-            msg += `\n*TOTAL: S/ ${total.toFixed(2)}*`;
+            msg += `\n * TOTAL: S / ${ total.toFixed(2) }* `;
 
             navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
         };
@@ -509,11 +495,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentSales.forEach(s => {
                 if (s.items && s.items.length > 0) {
                     s.items.forEach(item => {
-                        csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+                        csv += `${ s.fecha },${ s.cliente },${ s.documento || '' },${ item.producto },${ item.cantidad },${ item.unidad },${ item.precio_unit },${ item.total },${ s.total },${ s.pago },${ s.createdBy || '' } \n`;
                     });
                 } else {
                     // Legacy support
-                    csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},UND,${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+                    csv += `${ s.fecha },${ s.cliente },${ s.documento || '' },${ s.producto },${ s.cantidad }, UND, ${ (s.total / s.cantidad).toFixed(2) },${ s.total },${ s.total },${ s.pago },${ s.createdBy || '' } \n`;
                 }
             });
 
