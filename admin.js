@@ -372,6 +372,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const itemCount = isInvoice && sale.items ? sale.items.length : 1;
 
             // --- Main Row ---
+            // --- Main Row ---
             const tr = document.createElement('tr');
             tr.className = 'sale-row';
             tr.dataset.id = sale.id; // Ensure ID is accessible
@@ -501,82 +502,64 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     }
-    salesTableBody.appendChild(row);
-});
 
-// Add delete listeners
-document.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-        if (confirm('¿Eliminar venta? Esta acción no se puede deshacer.')) {
-            const id = e.currentTarget.getAttribute('data-id');
-            try {
-                await deleteDoc(doc(db, "ventas", id));
-            } catch (error) {
-                console.error("Error deleting document: ", error);
-                alert("Error al eliminar: " + error.message);
+
+    function updateStats(sales) {
+        document.getElementById('total-sales-count').textContent = sales.length;
+        const total = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+        document.getElementById('total-revenue').textContent = total.toFixed(2);
+    }
+
+    // --- Export & WhatsApp ---
+    window.copyForWhatsApp = function () {
+        const today = new Date().toISOString().split('T')[0];
+        const todaysSales = currentSales.filter(s => s.fecha === today);
+
+        if (todaysSales.length === 0) {
+            alert("No hay ventas con fecha de hoy (" + today + ") para reportar.");
+            return;
+        }
+
+        let msg = `*REPORTE PLASTIMARKET (${today})*\n\n`;
+        let total = 0;
+        todaysSales.forEach(s => {
+            if (s.items) {
+                s.items.forEach(item => {
+                    msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad})\n`;
+                });
+            } else {
+                msg += `📦 ${s.producto} x${s.cantidad}\n`;
             }
-        }
-    });
-});
-    }
+            msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
+            msg += `----------------\n`;
+            total += s.total;
+        });
+        msg += `\n*TOTAL: S/ ${total.toFixed(2)}*`;
 
-function updateStats(sales) {
-    document.getElementById('total-sales-count').textContent = sales.length;
-    const total = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-    document.getElementById('total-revenue').textContent = total.toFixed(2);
-}
+        navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
+    };
 
-// --- Export & WhatsApp ---
-window.copyForWhatsApp = function () {
-    const today = new Date().toISOString().split('T')[0];
-    const todaysSales = currentSales.filter(s => s.fecha === today);
+    window.exportToCSV = function () {
+        if (currentSales.length === 0) return alert("Sin datos para exportar");
 
-    if (todaysSales.length === 0) {
-        alert("No hay ventas con fecha de hoy (" + today + ") para reportar.");
-        return;
-    }
+        let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Unidad,PrecioUnit,TotalItem,TotalVenta,Pago,Vendedor\n";
 
-    let msg = `*REPORTE PLASTIMARKET (${today})*\n\n`;
-    let total = 0;
-    todaysSales.forEach(s => {
-        if (s.items) {
-            s.items.forEach(item => {
-                msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad})\n`;
-            });
-        } else {
-            msg += `📦 ${s.producto} x${s.cantidad}\n`;
-        }
-        msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
-        msg += `----------------\n`;
-        total += s.total;
-    });
-    msg += `\n*TOTAL: S/ ${total.toFixed(2)}*`;
+        currentSales.forEach(s => {
+            if (s.items && s.items.length > 0) {
+                s.items.forEach(item => {
+                    csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+                });
+            } else {
+                // Legacy support
+                csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},UND,${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+            }
+        });
 
-    navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
-};
+        const link = document.createElement("a");
+        link.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
+        link.download = "ventas_plastimarket_detalle.csv";
+        link.click();
+    };
 
-window.exportToCSV = function () {
-    if (currentSales.length === 0) return alert("Sin datos para exportar");
-
-    let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Unidad,PrecioUnit,TotalItem,TotalVenta,Pago,Vendedor\n";
-
-    currentSales.forEach(s => {
-        if (s.items && s.items.length > 0) {
-            s.items.forEach(item => {
-                csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
-            });
-        } else {
-            // Legacy support
-            csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},UND,${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
-        }
-    });
-
-    const link = document.createElement("a");
-    link.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
-    link.download = "ventas_plastimarket_detalle.csv";
-    link.click();
-};
-
-// Start Auth Check
-checkAuth();
-});
+    // Start Auth Check
+    checkAuth();
