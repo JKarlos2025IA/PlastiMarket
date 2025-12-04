@@ -37,73 +37,12 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Botón de generar comprobante */
-.btn-generate-invoice {
-    background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);
-    color: white;
-    border: none;
-    padding: 6px 16px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(106, 27, 154, 0.3);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.btn-generate-invoice:hover {
-    background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(106, 27, 154, 0.4);
-}
-
-.btn-generate-invoice:disabled {
-    background: #555;
-    cursor: not-allowed;
-    opacity: 0.5;
-}
-
-.btn-generate-invoice i {
-    font-size: 1rem;
-}
-
-/* Botón de descarga PDF */
-.btn-download-pdf {
-    background: linear-gradient(135deg, #00acc1 0%, #00838f 100%);
-    color: white;
-    border: none;
-    padding: 6px 16px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 172, 193, 0.3);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-}
-
-.btn-download-pdf:hover {
-    background: linear-gradient(135deg, #00bcd4 0%, #00acc1 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 172, 193, 0.4);
-}
-
-.btn-download-pdf i {
-    font-size: 1rem;
-}
-
 /* Columna de comprobante */
 .invoice-cell {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .invoice-number {
@@ -113,43 +52,96 @@
     font-family: 'Courier New', monospace;
 }
 
-/* Loading spinner para generación */
-.invoice-loading {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #888;
-    font-size: 0.85rem;
-}
-
+/* Loading spinner */
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
 
-.invoice-loading i {
+/* ============================================
+   BOTÓN ESTILO SUNAT - ICONO ÚNICO
+   ============================================ */
+
+.btn-sunat {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+/* Estado: Pendiente de generar (colores SUNAT) */
+.btn-sunat.pendiente {
+    background: linear-gradient(135deg, #a8324a 0%, #1e5aa8 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(168, 50, 74, 0.4);
+}
+
+.btn-sunat.pendiente:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(168, 50, 74, 0.6);
+}
+
+.btn-sunat.pendiente i {
+    font-size: 1.3rem;
+}
+
+/* Estado: Emitido/PDF */
+.btn-sunat.emitido {
+    background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 137, 123, 0.4);
+}
+
+.btn-sunat.emitido:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(0, 137, 123, 0.6);
+}
+
+/* Estado: Error */
+.btn-sunat.error {
+    background: linear-gradient(135deg, #ef5350 0%, #d32f2f 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);
+}
+
+.btn-sunat.error:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.6);
+}
+
+/* Animación de loading */
+.btn-sunat.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-sunat.loading i {
     animation: spin 1s linear infinite;
 }
 
-/* Tooltip de error */
-.invoice-error-tooltip {
-    position: relative;
-    cursor: help;
+/* Botón de descarga PDF */
+.btn-download-pdf {
+    background: linear-gradient(135deg, #00acc1 0%, #00838f 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.3s ease;
 }
 
-.invoice-error-tooltip:hover::after {
-    content: attr(data-error);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(211, 47, 47, 0.95);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    white-space: nowrap;
-    z-index: 1000;
-    margin-bottom: 8px;
+.btn-download-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 172, 193, 0.4);
 }
