@@ -922,172 +922,140 @@ body {
         }
     }
 
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .admin-content {
-            padding: 1rem;
-        }
-
-        .card-panel {
-            padding: 1rem;
-        }
-
-        .panel-title {
-            font-size: 1rem;
-        }
-
-        .filters-bar {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .filters-bar input,
-        .filters-bar select,
-        .filters-bar button {
-            width: 100%;
-            font-size: 0.9rem;
-        }
-
-        .data-table th,
-        .data-table td {
-            padding: 0.5rem;
-            font-size: 0.85rem;
-        }
-
-        .invoice-table th,
-        .invoice-table td {
-            padding: 0.5rem;
-            font-size: 0.85rem;
-        }
-
-        .totals-grid {
-            font-size: 1rem;
-        }
-
-        .total-final {
-            font-size: 1.2rem;
-        }
-
-        .stats-bar {
-            flex-direction: column;
-            padding: 1rem;
-        }
-
-        .export-actions {
-            width: 100%;
-            flex-direction: column;
-        }
-
-        .export-actions button {
-            width: 100%;
-        }
+    .invoice-table th,
+    .invoice-table td {
+        padding: 0.5rem;
+        font-size: 0.85rem;
     }
 
-    /* Extra small devices */
-    @media (max-width: 480px) {
-        body {
-            font-size: 14px;
-        }
-
-        .admin-header {
-            padding: 0.75rem 1rem;
-        }
-
-        .logo-text {
-            font-size: 1.2rem !important;
-        }
-
-        .dashboard-tabs {
-            gap: 0.5rem;
-        }
-
-        .tab-btn {
-            font-size: 0.9rem;
-            padding: 0.4rem 0.8rem;
-        }
-
-        .card-panel {
-            padding: 0.75rem;
-        }
-
-        .panel-title {
-            font-size: 0.95rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            font-size: 0.85rem;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            padding: 0.75rem;
-            font-size: 0.9rem;
-        }
-
-        .btn {
-            padding: 0.7rem 1rem;
-            font-size: 0.9rem;
-        }
-
-        .btn-large {
-            padding: 0.85rem 1.5rem;
-            font-size: 1rem;
-        }
-
-        .data-table th,
-        .data-table td {
-            padding: 0.4rem;
-            font-size: 0.75rem;
-        }
-
-        .invoice-table th,
-        .invoice-table td {
-            padding: 0.4rem;
-            font-size: 0.75rem;
-        }
-
-        .status-badge {
-            font-size: 0.65rem;
-            padding: 0.2rem 0.4rem;
-        }
-
-        .totals-grid {
-            font-size: 0.9rem;
-            gap: 0.5rem;
-        }
-
-        .total-final {
-            font-size: 1.1rem;
-        }
-
-        .side-drawer {
-            width: 100%;
-            right: -100%;
-        }
-
-        .drawer-header h3 {
-            font-size: 1.1rem;
-        }
-
-        .drawer-body {
-            padding: 1rem;
-        }
-
-        .drawer-footer {
-            padding: 1rem;
-        }
-
-        .form-row {
-            grid-template-columns: 1fr;
-        }
-
-        .stat-item {
-            font-size: 0.9rem;
-        }
-
-        .stat-item strong {
-            font-size: 1rem;
-        }
+    .totals-grid {
+        font-size: 1rem;
     }
+
+    .total-final {
+        font-size: 1.2rem;
+    }
+
+    .stats-bar {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .export-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .export-actions button {
+        width: 100%;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+
+    .admin-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .logo-text {
+        font-size: 1.2rem !important;
+    }
+
+    .dashboard-tabs {
+        gap: 0.5rem;
+    }
+
+    .tab-btn {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .card-panel {
+        padding: 0.75rem;
+    }
+
+    .panel-title {
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .btn {
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-large {
+        padding: 0.85rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    .invoice-table th,
+    .invoice-table td {
+        padding: 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    .status-badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    .totals-grid {
+        font-size: 0.9rem;
+        gap: 0.5rem;
+    }
+
+    .total-final {
+        font-size: 1.1rem;
+    }
+
+    .side-drawer {
+        width: 100%;
+        right: -100%;
+    }
+
+    .drawer-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .drawer-body {
+        padding: 1rem;
+    }
+
+    .drawer-footer {
+        padding: 1rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-item {
+        font-size: 0.9rem;
+    }
+
+    .stat-item strong {
+        font-size: 1rem;
+    }
+}
