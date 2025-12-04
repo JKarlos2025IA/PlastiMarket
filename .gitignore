@@ -1,7 +1,20 @@
+# Firebase cache
+.firebase/
+
+# Node modules
 node_modules/
+functions/node_modules/
+
+# Environment variables
+.env
+functions/.env
+*.env.local
+
+# Firebase Functions
+functions/lib/
+functions/.eslint*
 .DS_Store
 *.bak
 *.log
 update_footer.js
 footer_fix.txt
-.firebase/
