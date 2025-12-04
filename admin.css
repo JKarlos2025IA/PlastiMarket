@@ -6,28 +6,6 @@
     --text-muted: #aaaaaa;
     --border-color: rgba(255, 255, 255, 0.1);
     --success-color: #2ecc71;
-    --warning-color: #f1c40f;
-    --danger-color: #e74c3c;
-    --font-heading: 'Inter', sans-serif;
-    --font-body: 'Inter', sans-serif;
-}
-
-body {
-    font-family: var(--font-body);
-    background-color: var(--dark-bg);
-    color: var(--text-color);
-    margin: 0;
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-}
-
-/* Dashboard View */
-#dashboard-view {
-    display: none;
     /* Hidden by default until logged in */
     flex: 1;
     flex-direction: column;
