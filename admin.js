@@ -124,51 +124,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             sections.forEach(s => s.classList.remove('active'));
             btn.classList.add('active');
             const tabId = btn.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
         });
-    });
 
-    // --- Invoice Logic ---
+        function addInvoiceRow() {
+            const row = document.createElement('tr');
+            const rowCount = itemsBody.children.length + 1;
 
-    // RUC Lookup (Simulation)
-    btnSearchRuc.addEventListener('click', async () => {
-        const ruc = inputDocumento.value;
-        if (ruc.length !== 11) {
-            alert("El RUC debe tener 11 dígitos");
-            return;
-        }
-
-        // Simulate API delay
-        btnSearchRuc.disabled = true;
-        btnSearchRuc.innerHTML = '<i class="ph ph-spinner ph-spin"></i>';
-
-        setTimeout(() => {
-            // Mock Data
-            const mockNames = [
-                "PLASTICOS DEL SUR S.A.C.",
-                "DISTRIBUIDORA COMERCIAL LIMA E.I.R.L.",
-                "INVERSIONES GENERALES PERU S.A.",
-                "CORPORACION DE EMPAQUES S.A.C."
-            ];
-            const randomName = mockNames[Math.floor(Math.random() * mockNames.length)];
-
-            inputCliente.value = randomName;
-
-            btnSearchRuc.disabled = false;
-            btnSearchRuc.innerHTML = '<i class="ph ph-magnifying-glass"></i>';
-        }, 800);
-    });
-
-    // Add Row
-    btnAddItem.addEventListener('click', () => {
-        addInvoiceRow();
-    });
-
-    function addInvoiceRow() {
-        const row = document.createElement('tr');
-        const rowCount = itemsBody.children.length + 1;
-
-        row.innerHTML = `
+            row.innerHTML = `
             <td>${rowCount}</td>
             <td>
                 <select class="item-product" required>
@@ -197,205 +159,205 @@ document.addEventListener('DOMContentLoaded', async () => {
             </td>
         `;
 
-        itemsBody.appendChild(row);
-        attachRowEvents(row);
-    }
+            itemsBody.appendChild(row);
+            attachRowEvents(row);
+        }
 
-    function attachRowEvents(row) {
-        const qtyInput = row.querySelector('.item-qty');
-        const priceInput = row.querySelector('.item-price');
-        const removeBtn = row.querySelector('.btn-remove-item');
+        function attachRowEvents(row) {
+            const qtyInput = row.querySelector('.item-qty');
+            const priceInput = row.querySelector('.item-price');
+            const removeBtn = row.querySelector('.btn-remove-item');
 
-        const updateRowTotal = () => {
-            const qty = parseFloat(qtyInput.value) || 0;
-            const price = parseFloat(priceInput.value) || 0;
-            const total = qty * price;
-            row.querySelector('.item-total').value = total.toFixed(2);
-            calculateInvoiceTotals();
-        };
-
-        qtyInput.addEventListener('input', updateRowTotal);
-        priceInput.addEventListener('input', updateRowTotal);
-
-        if (removeBtn) {
-            removeBtn.addEventListener('click', () => {
-                row.remove();
+            const updateRowTotal = () => {
+                const qty = parseFloat(qtyInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                const total = qty * price;
+                row.querySelector('.item-total').value = total.toFixed(2);
                 calculateInvoiceTotals();
-                // Re-index rows
-                Array.from(itemsBody.children).forEach((r, index) => {
-                    r.firstElementChild.textContent = index + 1;
+            };
+
+            qtyInput.addEventListener('input', updateRowTotal);
+            priceInput.addEventListener('input', updateRowTotal);
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    row.remove();
+                    calculateInvoiceTotals();
+                    // Re-index rows
+                    Array.from(itemsBody.children).forEach((r, index) => {
+                        r.firstElementChild.textContent = index + 1;
+                    });
+                });
+            }
+        }
+
+        function calculateInvoiceTotals() {
+            let subtotal = 0;
+            const rows = itemsBody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const total = parseFloat(row.querySelector('.item-total').value) || 0;
+                subtotal += total;
+            });
+
+            const igv = subtotal * 0.18;
+            const total = subtotal + igv;
+
+            lblSubtotal.textContent = `S/ ${subtotal.toFixed(2)}`;
+            lblIgv.textContent = `S/ ${igv.toFixed(2)}`;
+            lblTotal.textContent = `S/ ${total.toFixed(2)}`;
+
+            return { subtotal, igv, total };
+        }
+
+        // --- Sales Logic (Save) ---
+
+        salesForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = salesForm.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Guardando...';
+
+            // Gather Items
+            const items = [];
+            itemsBody.querySelectorAll('tr').forEach(row => {
+                items.push({
+                    producto: row.querySelector('.item-product').value,
+                    unidad: row.querySelector('.item-unit').value,
+                    cantidad: parseFloat(row.querySelector('.item-qty').value),
+                    precio_unit: parseFloat(row.querySelector('.item-price').value),
+                    total: parseFloat(row.querySelector('.item-total').value)
                 });
             });
-        }
-    }
 
-    function calculateInvoiceTotals() {
-        let subtotal = 0;
-        const rows = itemsBody.querySelectorAll('tr');
+            const totals = calculateInvoiceTotals();
 
-        rows.forEach(row => {
-            const total = parseFloat(row.querySelector('.item-total').value) || 0;
-            subtotal += total;
+            const newSale = {
+                fecha: document.getElementById('fecha').value,
+                cliente: document.getElementById('cliente').value,
+                documento: document.getElementById('documento').value,
+                items: items,
+                subtotal: totals.subtotal,
+                igv: totals.igv,
+                total: totals.total,
+                pago: document.getElementById('pago').value,
+                timestamp: new Date().toISOString(),
+                createdBy: auth.currentUser ? auth.currentUser.email : 'unknown',
+                type: 'invoice' // Mark as invoice type
+            };
+
+            try {
+                await addDoc(salesCollection, newSale);
+
+                // Reset Form
+                salesForm.reset();
+                document.getElementById('fecha').valueAsDate = new Date();
+                itemsBody.innerHTML = '';
+                addInvoiceRow(); // Add one empty row
+                calculateInvoiceTotals(); // Reset totals
+
+                alert("Venta registrada exitosamente");
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert("Error al guardar: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph ph-floppy-disk"></i> GUARDAR VENTA';
+            }
         });
 
-        const igv = subtotal * 0.18;
-        const total = subtotal + igv;
+        function subscribeToSales() {
+            if (unsubscribeSales) return;
 
-        lblSubtotal.textContent = `S/ ${subtotal.toFixed(2)}`;
-        lblIgv.textContent = `S/ ${igv.toFixed(2)}`;
-        lblTotal.textContent = `S/ ${total.toFixed(2)}`;
+            const q = query(salesCollection, orderBy("timestamp", "desc"));
 
-        return { subtotal, igv, total };
-    }
-
-    // --- Sales Logic (Save) ---
-
-    salesForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = salesForm.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.textContent = 'Guardando...';
-
-        // Gather Items
-        const items = [];
-        itemsBody.querySelectorAll('tr').forEach(row => {
-            items.push({
-                producto: row.querySelector('.item-product').value,
-                unidad: row.querySelector('.item-unit').value,
-                cantidad: parseFloat(row.querySelector('.item-qty').value),
-                precio_unit: parseFloat(row.querySelector('.item-price').value),
-                total: parseFloat(row.querySelector('.item-total').value)
+            unsubscribeSales = onSnapshot(q, (snapshot) => {
+                const sales = [];
+                snapshot.forEach((doc) => {
+                    sales.push({ id: doc.id, ...doc.data() });
+                });
+                currentSales = sales;
+                renderTable(sales);
+                updateStats(sales);
+            }, (error) => {
+                console.error("Error getting documents: ", error);
             });
-        });
-
-        const totals = calculateInvoiceTotals();
-
-        const newSale = {
-            fecha: document.getElementById('fecha').value,
-            cliente: document.getElementById('cliente').value,
-            documento: document.getElementById('documento').value,
-            items: items,
-            subtotal: totals.subtotal,
-            igv: totals.igv,
-            total: totals.total,
-            pago: document.getElementById('pago').value,
-            timestamp: new Date().toISOString(),
-            createdBy: auth.currentUser ? auth.currentUser.email : 'unknown',
-            type: 'invoice' // Mark as invoice type
-        };
-
-        try {
-            await addDoc(salesCollection, newSale);
-
-            // Reset Form
-            salesForm.reset();
-            document.getElementById('fecha').valueAsDate = new Date();
-            itemsBody.innerHTML = '';
-            addInvoiceRow(); // Add one empty row
-            calculateInvoiceTotals(); // Reset totals
-
-            alert("Venta registrada exitosamente");
-        } catch (error) {
-            console.error("Error adding document: ", error);
-            alert("Error al guardar: " + error.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="ph ph-floppy-disk"></i> GUARDAR VENTA';
-        }
-    });
-
-    function subscribeToSales() {
-        if (unsubscribeSales) return;
-
-        const q = query(salesCollection, orderBy("timestamp", "desc"));
-
-        unsubscribeSales = onSnapshot(q, (snapshot) => {
-            const sales = [];
-            snapshot.forEach((doc) => {
-                sales.push({ id: doc.id, ...doc.data() });
-            });
-            currentSales = sales;
-            renderTable(sales);
-            updateStats(sales);
-        }, (error) => {
-            console.error("Error getting documents: ", error);
-        });
-    }
-
-    // --- Filters Logic ---
-    btnApplyFilters.addEventListener('click', () => {
-        let filtered = [...currentSales];
-
-        const start = filterDateStart.value;
-        const end = filterDateEnd.value;
-        const client = filterCliente.value.toLowerCase();
-        const payMethod = filterPago.value;
-
-        if (start) {
-            filtered = filtered.filter(s => s.fecha >= start);
-        }
-        if (end) {
-            filtered = filtered.filter(s => s.fecha <= end);
-        }
-        if (client) {
-            filtered = filtered.filter(s => s.cliente.toLowerCase().includes(client));
-        }
-        if (payMethod) {
-            filtered = filtered.filter(s => s.pago === payMethod);
         }
 
-        renderTable(filtered);
-        updateStats(filtered);
-    });
+        // --- Filters Logic ---
+        btnApplyFilters.addEventListener('click', () => {
+            let filtered = [...currentSales];
 
-    btnClearFilters.addEventListener('click', () => {
-        filterDateStart.value = '';
-        filterDateEnd.value = '';
-        filterCliente.value = '';
-        filterPago.value = '';
-        renderTable(currentSales);
-        updateStats(currentSales);
-    });
+            const start = filterDateStart.value;
+            const end = filterDateEnd.value;
+            const client = filterCliente.value.toLowerCase();
+            const payMethod = filterPago.value;
 
-
-    function renderTable(sales) {
-        salesTableBody.innerHTML = '';
-        if (sales.length === 0) {
-            document.getElementById('no-data-message').style.display = 'block';
-            return;
-        }
-        document.getElementById('no-data-message').style.display = 'none';
-
-        sales.forEach(sale => {
-            // Determine if it's an invoice type or legacy
-            const isInvoice = sale.type === 'invoice';
-            const itemCount = isInvoice && sale.items ? sale.items.length : 1;
-
-            // --- Main Row ---
-            // --- Main Row ---
-            const tr = document.createElement('tr');
-            tr.className = 'sale-row';
-            tr.dataset.id = sale.id; // Ensure ID is accessible
-
-            // Format Date
-            // Handle both Firestore Timestamp and string dates (legacy)
-            let dateStr = sale.fecha;
-            if (sale.timestamp && typeof sale.timestamp.toDate === 'function') {
-                dateStr = sale.timestamp.toDate().toLocaleDateString('es-PE');
+            if (start) {
+                filtered = filtered.filter(s => s.fecha >= start);
+            }
+            if (end) {
+                filtered = filtered.filter(s => s.fecha <= end);
+            }
+            if (client) {
+                filtered = filtered.filter(s => s.cliente.toLowerCase().includes(client));
+            }
+            if (payMethod) {
+                filtered = filtered.filter(s => s.pago === payMethod);
             }
 
-            // Product Summary
-            let productSummary = '';
-            if (isInvoice && sale.items && sale.items.length > 0) {
-                productSummary = `${sale.items[0].producto} <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
-            } else {
-                productSummary = sale.producto || 'Producto desconocido';
+            renderTable(filtered);
+            updateStats(filtered);
+        });
+
+        btnClearFilters.addEventListener('click', () => {
+            filterDateStart.value = '';
+            filterDateEnd.value = '';
+            filterCliente.value = '';
+            filterPago.value = '';
+            renderTable(currentSales);
+            updateStats(currentSales);
+        });
+
+
+        function renderTable(sales) {
+            salesTableBody.innerHTML = '';
+            if (sales.length === 0) {
+                document.getElementById('no-data-message').style.display = 'block';
+                return;
             }
+            document.getElementById('no-data-message').style.display = 'none';
 
-            // Total Formatting
-            const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total || 0);
+            sales.forEach(sale => {
+                // Determine if it's an invoice type or legacy
+                const isInvoice = sale.type === 'invoice';
+                const itemCount = isInvoice && sale.items ? sale.items.length : 1;
 
-            tr.innerHTML = `
+                // --- Main Row ---
+                // --- Main Row ---
+                const tr = document.createElement('tr');
+                tr.className = 'sale-row';
+                tr.dataset.id = sale.id; // Ensure ID is accessible
+
+                // Format Date
+                // Handle both Firestore Timestamp and string dates (legacy)
+                let dateStr = sale.fecha;
+                if (sale.timestamp && typeof sale.timestamp.toDate === 'function') {
+                    dateStr = sale.timestamp.toDate().toLocaleDateString('es-PE');
+                }
+
+                // Product Summary
+                let productSummary = '';
+                if (isInvoice && sale.items && sale.items.length > 0) {
+                    productSummary = `${sale.items[0].producto} <span style="color: #888; font-size: 0.85em;">(${itemCount} ítems)</span>`;
+                } else {
+                    productSummary = sale.producto || 'Producto desconocido';
+                }
+
+                // Total Formatting
+                const totalFormatted = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(sale.total || 0);
+
+                tr.innerHTML = `
                 <td><i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td>
                 <td>${sale.cliente || 'Cliente General'}</td>
                 <td>${productSummary}</td>
@@ -410,14 +372,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </td>
             `;
 
-            // --- Detail Row (Hidden by default) ---
-            const trDetail = document.createElement('tr');
-            trDetail.className = 'detail-row';
-            trDetail.id = `detail-${sale.id}`;
+                // --- Detail Row (Hidden by default) ---
+                const trDetail = document.createElement('tr');
+                trDetail.className = 'detail-row';
+                trDetail.id = `detail-${sale.id}`;
 
-            let detailsHtml = '';
-            if (isInvoice && sale.items) {
-                detailsHtml = `
+                let detailsHtml = '';
+                if (isInvoice && sale.items) {
+                    detailsHtml = `
                     <div class="detail-content">
                         <table class="detail-table">
                             <thead>
@@ -447,120 +409,120 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </div>
                 `;
-            } else {
-                detailsHtml = `
+                } else {
+                    detailsHtml = `
                     <div class="detail-content">
                         <p><em>Venta simple (sin detalle de ítems)</em></p>
                         <p>Producto: ${sale.producto}</p>
                         <p>Cantidad: ${sale.cantidad}</p>
                     </div>
                 `;
-            }
-
-            trDetail.innerHTML = `<td colspan="8">${detailsHtml}</td>`;
-
-            // Add Click Event to Toggle
-            tr.addEventListener('click', (e) => {
-                // Don't expand if clicking delete button
-                if (e.target.closest('.btn-delete')) return;
-
-                tr.classList.toggle('expanded');
-                const detailRow = document.getElementById(`detail-${sale.id}`);
-
-                if (detailRow.classList.contains('active')) {
-                    detailRow.classList.remove('active');
-                } else {
-                    // Optional: Close other open rows
-                    document.querySelectorAll('.detail-row.active').forEach(row => {
-                        row.classList.remove('active');
-                        const prevId = row.id.replace('detail-', '');
-                        const prevTr = document.querySelector(`tr[data-id="${prevId}"]`);
-                        if (prevTr) prevTr.classList.remove('expanded');
-                    });
-                    detailRow.classList.add('active');
                 }
-            });
 
-            salesTableBody.appendChild(tr);
-            salesTableBody.appendChild(trDetail);
-        });
+                trDetail.innerHTML = `<td colspan="8">${detailsHtml}</td>`;
 
-        // Re-attach delete listeners
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation(); // Prevent row expansion
-                if (confirm('¿Estás seguro de eliminar esta venta?')) {
-                    const id = e.currentTarget.dataset.id;
-                    try {
-                        await deleteDoc(doc(db, "ventas", id));
-                        // Table updates automatically via onSnapshot
-                    } catch (error) {
-                        console.error("Error deleting document: ", error);
-                        alert("Error al eliminar la venta");
+                // Add Click Event to Toggle
+                tr.addEventListener('click', (e) => {
+                    // Don't expand if clicking delete button
+                    if (e.target.closest('.btn-delete')) return;
+
+                    tr.classList.toggle('expanded');
+                    const detailRow = document.getElementById(`detail-${sale.id}`);
+
+                    if (detailRow.classList.contains('active')) {
+                        detailRow.classList.remove('active');
+                    } else {
+                        // Optional: Close other open rows
+                        document.querySelectorAll('.detail-row.active').forEach(row => {
+                            row.classList.remove('active');
+                            const prevId = row.id.replace('detail-', '');
+                            const prevTr = document.querySelector(`tr[data-id="${prevId}"]`);
+                            if (prevTr) prevTr.classList.remove('expanded');
+                        });
+                        detailRow.classList.add('active');
                     }
-                }
+                });
+
+                salesTableBody.appendChild(tr);
+                salesTableBody.appendChild(trDetail);
             });
-        });
-    }
 
-
-    function updateStats(sales) {
-        document.getElementById('total-sales-count').textContent = sales.length;
-        const total = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
-        document.getElementById('total-revenue').textContent = total.toFixed(2);
-    }
-
-    // --- Export & WhatsApp ---
-    window.copyForWhatsApp = function () {
-        const today = new Date().toISOString().split('T')[0];
-        const todaysSales = currentSales.filter(s => s.fecha === today);
-
-        if (todaysSales.length === 0) {
-            alert("No hay ventas con fecha de hoy (" + today + ") para reportar.");
-            return;
+            // Re-attach delete listeners
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation(); // Prevent row expansion
+                    if (confirm('¿Estás seguro de eliminar esta venta?')) {
+                        const id = e.currentTarget.dataset.id;
+                        try {
+                            await deleteDoc(doc(db, "ventas", id));
+                            // Table updates automatically via onSnapshot
+                        } catch (error) {
+                            console.error("Error deleting document: ", error);
+                            alert("Error al eliminar la venta");
+                        }
+                    }
+                });
+            });
         }
 
-        let msg = `*REPORTE PLASTIMARKET (${today})*\n\n`;
-        let total = 0;
-        todaysSales.forEach(s => {
-            if (s.items) {
-                s.items.forEach(item => {
-                    msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad})\n`;
-                });
-            } else {
-                msg += `📦 ${s.producto} x${s.cantidad}\n`;
+
+        function updateStats(sales) {
+            document.getElementById('total-sales-count').textContent = sales.length;
+            const total = sales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+            document.getElementById('total-revenue').textContent = total.toFixed(2);
+        }
+
+        // --- Export & WhatsApp ---
+        window.copyForWhatsApp = function () {
+            const today = new Date().toISOString().split('T')[0];
+            const todaysSales = currentSales.filter(s => s.fecha === today);
+
+            if (todaysSales.length === 0) {
+                alert("No hay ventas con fecha de hoy (" + today + ") para reportar.");
+                return;
             }
-            msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
-            msg += `----------------\n`;
-            total += s.total;
-        });
-        msg += `\n*TOTAL: S/ ${total.toFixed(2)}*`;
 
-        navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
-    };
+            let msg = `*REPORTE PLASTIMARKET (${today})*\n\n`;
+            let total = 0;
+            todaysSales.forEach(s => {
+                if (s.items) {
+                    s.items.forEach(item => {
+                        msg += `📦 ${item.producto} x${item.cantidad} (${item.unidad})\n`;
+                    });
+                } else {
+                    msg += `📦 ${s.producto} x${s.cantidad}\n`;
+                }
+                msg += `👤 ${s.cliente} - S/ ${s.total.toFixed(2)}\n`;
+                msg += `----------------\n`;
+                total += s.total;
+            });
+            msg += `\n*TOTAL: S/ ${total.toFixed(2)}*`;
 
-    window.exportToCSV = function () {
-        if (currentSales.length === 0) return alert("Sin datos para exportar");
+            navigator.clipboard.writeText(msg).then(() => alert("Reporte copiado al portapapeles!"));
+        };
 
-        let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Unidad,PrecioUnit,TotalItem,TotalVenta,Pago,Vendedor\n";
+        window.exportToCSV = function () {
+            if (currentSales.length === 0) return alert("Sin datos para exportar");
 
-        currentSales.forEach(s => {
-            if (s.items && s.items.length > 0) {
-                s.items.forEach(item => {
-                    csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
-                });
-            } else {
-                // Legacy support
-                csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},UND,${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
-            }
-        });
+            let csv = "Fecha,Cliente,Documento,Producto,Cantidad,Unidad,PrecioUnit,TotalItem,TotalVenta,Pago,Vendedor\n";
 
-        const link = document.createElement("a");
-        link.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
-        link.download = "ventas_plastimarket_detalle.csv";
-        link.click();
-    };
+            currentSales.forEach(s => {
+                if (s.items && s.items.length > 0) {
+                    s.items.forEach(item => {
+                        csv += `${s.fecha},${s.cliente},${s.documento || ''},${item.producto},${item.cantidad},${item.unidad},${item.precio_unit},${item.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+                    });
+                } else {
+                    // Legacy support
+                    csv += `${s.fecha},${s.cliente},${s.documento || ''},${s.producto},${s.cantidad},UND,${(s.total / s.cantidad).toFixed(2)},${s.total},${s.total},${s.pago},${s.createdBy || ''}\n`;
+                }
+            });
 
-    // Start Auth Check
-    checkAuth();
-});
+            const link = document.createElement("a");
+            link.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
+            link.download = "ventas_plastimarket_detalle.csv";
+            link.click();
+        };
+
+        // Start Auth Check
+        checkAuth();
+    });
