@@ -86,10 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         loginView.style.display = 'none';
         dashboardView.style.display = 'flex';
         subscribeToSales();
-        // Initialize with one empty row
-        if (itemsBody && itemsBody.children.length === 0) {
-            addInvoiceRow();
-        }
+        // Do NOT add a default row, user must use the drawer
     }
 
     // Login Form
