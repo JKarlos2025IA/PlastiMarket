@@ -221,93 +221,166 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Add Row
-    btnAddItem.addEventListener('click', () => {
-        addInvoiceRow();
+    // --- Side Drawer Logic ---
+    const drawerOverlay = document.getElementById('drawer-overlay');
+    const itemDrawer = document.getElementById('item-drawer');
+    const btnCloseDrawer = document.getElementById('btn-close-drawer');
+    const btnDrawerAdd = document.getElementById('btn-drawer-add');
+    const drawerForm = document.getElementById('drawer-form');
+
+    // Drawer Inputs
+    const itemTipo = document.getElementsByName('tipo');
+    const itemCodigo = document.getElementById('item-codigo');
+    const itemDescripcion = document.getElementById('item-descripcion');
+    const itemCantidad = document.getElementById('item-cantidad');
+    const itemUnidad = document.getElementById('item-unidad');
+    const itemPrecio = document.getElementById('item-precio');
+    const itemImpuesto = document.getElementById('item-impuesto');
+    const itemTotalDisplay = document.getElementById('item-total-display');
+
+    function openDrawer() {
+        drawerOverlay.classList.add('active');
+        itemDrawer.classList.add('active');
+        // Defaults
+        itemCantidad.value = 1;
+        itemPrecio.value = 0.00;
+        itemDescripcion.value = '';
+        itemCodigo.value = '';
+        calculateDrawerTotal();
+        itemDescripcion.focus();
+    }
+
+    function closeDrawer() {
+        drawerOverlay.classList.remove('active');
+        itemDrawer.classList.remove('active');
+    }
+
+    function calculateDrawerTotal() {
+        const cant = parseFloat(itemCantidad.value) || 0;
+        const price = parseFloat(itemPrecio.value) || 0;
+        const total = cant * price;
+        itemTotalDisplay.textContent = `S/ ${total.toFixed(2)}`;
+    }
+
+    // Event Listeners for Drawer
+    btnAddItem.addEventListener('click', openDrawer);
+    btnCloseDrawer.addEventListener('click', closeDrawer);
+    drawerOverlay.addEventListener('click', closeDrawer);
+
+    [itemCantidad, itemPrecio].forEach(input => {
+        input.addEventListener('input', calculateDrawerTotal);
     });
 
-    function addInvoiceRow() {
+    // Add Item from Drawer to Table
+    btnDrawerAdd.addEventListener('click', () => {
+        if (!drawerForm.checkValidity()) {
+            drawerForm.reportValidity();
+            return;
+        }
+
+        const tipo = Array.from(itemTipo).find(r => r.checked).value;
+        const codigo = itemCodigo.value.trim();
+        const descripcion = itemDescripcion.value.trim();
+        const cantidad = parseFloat(itemCantidad.value);
+        const unidad = itemUnidad.value;
+        const precio = parseFloat(itemPrecio.value);
+        const impuesto = itemImpuesto.value; // 18 or 0
+        const total = cantidad * precio;
+
+        addInvoiceRow({
+            tipo,
+            codigo,
+            descripcion,
+            cantidad,
+            unidad,
+            precio,
+            impuesto,
+            total
+        });
+
+        closeDrawer();
+        calculateInvoiceTotals();
+    });
+
+    function addInvoiceRow(item) {
         const row = document.createElement('tr');
         const rowCount = itemsBody.children.length + 1;
+
+        // Hidden inputs to store raw values for saving later
+        row.dataset.json = JSON.stringify(item);
 
         row.innerHTML = `
             <td>${rowCount}</td>
             <td>
-                <select class="item-product" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="Bolsa Blanca 16x24">Bolsa Blanca 16x24</option>
-                    <option value="Bolsa Blanca 20x30">Bolsa Blanca 20x30</option>
-                    <option value="Bolsa Cristal 10x15">Bolsa Cristal 10x15</option>
-                    <option value="Manga Industrial">Manga Industrial</option>
-                    <option value="Descartables">Descartables</option>
-                    <option value="Otros">Otros</option>
-                </select>
+                <div style="font-weight:600; color:white;">${item.descripcion}</div>
+                <div style="font-size:0.8rem; color:#888;">${item.codigo ? 'Cod: ' + item.codigo : ''} (${item.tipo})</div>
             </td>
+            <td>${item.unidad}</td>
+            <td>${item.cantidad}</td>
+            <td>S/ ${item.precio.toFixed(2)}</td>
+            <td class="row-total">S/ ${item.total.toFixed(2)}</td>
             <td>
-                <select class="item-unit">
-                    <option value="UND">UND</option>
-                    <option value="KG">KG</option>
-                    <option value="MILLAR">MILLAR</option>
-                    <option value="PAQ">PAQ</option>
-                </select>
-            </td>
-            <td><input type="number" class="item-qty" value="1" min="1" required></td>
-            <td><input type="number" class="item-price" value="0.00" step="0.01" min="0" required></td>
-            <td><input type="text" class="item-total" value="0.00" readonly style="background: #f9f9f9;"></td>
-            <td>
-                ${rowCount > 1 ? '<button type="button" class="btn-remove-item"><i class="ph ph-trash"></i></button>' : ''}
+                <button type="button" class="btn-remove-item" style="color:#ff4444; background:none; border:none; cursor:pointer;">
+                    <i class="ph ph-trash" style="font-size:1.2rem;"></i>
+                </button>
             </td>
         `;
 
         itemsBody.appendChild(row);
-        attachRowEvents(row);
-    }
 
-    function attachRowEvents(row) {
-        const qtyInput = row.querySelector('.item-qty');
-        const priceInput = row.querySelector('.item-price');
-        const removeBtn = row.querySelector('.btn-remove-item');
-
-        const updateRowTotal = () => {
-            const qty = parseFloat(qtyInput.value) || 0;
-            const price = parseFloat(priceInput.value) || 0;
-            const total = qty * price;
-            row.querySelector('.item-total').value = total.toFixed(2);
+        // Remove Event
+        row.querySelector('.btn-remove-item').addEventListener('click', () => {
+            row.remove();
             calculateInvoiceTotals();
-        };
-
-        qtyInput.addEventListener('input', updateRowTotal);
-        priceInput.addEventListener('input', updateRowTotal);
-
-        if (removeBtn) {
-            removeBtn.addEventListener('click', () => {
-                row.remove();
-                calculateInvoiceTotals();
-                // Re-index rows
-                Array.from(itemsBody.children).forEach((r, index) => {
-                    r.firstElementChild.textContent = index + 1;
-                });
+            // Re-index
+            Array.from(itemsBody.children).forEach((r, index) => {
+                r.firstElementChild.textContent = index + 1;
             });
-        }
+        });
     }
 
     function calculateInvoiceTotals() {
         let subtotal = 0;
+        let igvTotal = 0;
+        let totalFinal = 0;
+
         const rows = itemsBody.querySelectorAll('tr');
 
         rows.forEach(row => {
-            const total = parseFloat(row.querySelector('.item-total').value) || 0;
-            subtotal += total;
+            const item = JSON.parse(row.dataset.json);
+
+            // Logic: 
+            // If IGV is included (18%), we assume the Price Unit ALREADY includes IGV? 
+            // Or is it Base + IGV? 
+            // Standard retail usually implies Price includes IGV. 
+            // Let's assume Price Unit is the final price per unit.
+
+            // However, for proper accounting:
+            // If item.impuesto == 18:
+            // Base = Total / 1.18
+            // IGV = Total - Base
+
+            const rowTotal = item.total;
+
+            if (item.impuesto == '18') {
+                const base = rowTotal / 1.18;
+                const igv = rowTotal - base;
+                subtotal += base;
+                igvTotal += igv;
+            } else {
+                // Exonerado (0%)
+                subtotal += rowTotal;
+                // No IGV
+            }
+
+            totalFinal += rowTotal;
         });
 
-        const igv = subtotal * 0.18;
-        const total = subtotal + igv;
-
         lblSubtotal.textContent = `S/ ${subtotal.toFixed(2)}`;
-        lblIgv.textContent = `S/ ${igv.toFixed(2)}`;
-        lblTotal.textContent = `S/ ${total.toFixed(2)}`;
+        lblIgv.textContent = `S/ ${igvTotal.toFixed(2)}`;
+        lblTotal.textContent = `S/ ${totalFinal.toFixed(2)}`;
 
-        return { subtotal, igv, total };
+        return { subtotal, igv: igvTotal, total: totalFinal };
     }
 
     // --- Sales Logic (Save) ---
@@ -321,14 +394,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Gather Items
         const items = [];
         itemsBody.querySelectorAll('tr').forEach(row => {
+            const item = JSON.parse(row.dataset.json);
             items.push({
-                producto: row.querySelector('.item-product').value,
-                unidad: row.querySelector('.item-unit').value,
-                cantidad: parseFloat(row.querySelector('.item-qty').value),
-                precio_unit: parseFloat(row.querySelector('.item-price').value),
-                total: parseFloat(row.querySelector('.item-total').value)
+                producto: item.descripcion, // Use description as main product name
+                codigo: item.codigo,
+                tipo: item.tipo,
+                unidad: item.unidad,
+                cantidad: item.cantidad,
+                precio_unit: item.precio,
+                impuesto: item.impuesto,
+                total: item.total
             });
         });
+
+        if (items.length === 0) {
+            alert("Debe agregar al menos un ítem a la venta.");
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ph ph-floppy-disk"></i> GUARDAR VENTA';
+            return;
+        }
 
         const totals = calculateInvoiceTotals();
 
@@ -343,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             pago: document.getElementById('pago').value,
             timestamp: new Date().toISOString(),
             createdBy: auth.currentUser ? auth.currentUser.email : 'unknown',
-            type: 'invoice' // Mark as invoice type
+            type: 'invoice'
         };
 
         try {
@@ -353,7 +437,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             salesForm.reset();
             document.getElementById('fecha').valueAsDate = new Date();
             itemsBody.innerHTML = '';
-            addInvoiceRow(); // Add one empty row
+            // No default row added, user must use drawer
             calculateInvoiceTotals(); // Reset totals
 
             alert("Venta registrada exitosamente");
