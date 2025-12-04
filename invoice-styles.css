@@ -1,0 +1,155 @@
+/* ============================================
+   ESTILOS PARA FACTURACIÓN ELECTRÓNICA
+   ============================================ */
+
+/* Badges de estado de comprobante */
+.invoice-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-emitido {
+    background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 137, 123, 0.3);
+}
+
+.badge-pendiente {
+    background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+}
+
+.badge-error {
+    background: linear-gradient(135deg, #ef5350 0%, #d32f2f 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(211, 47, 47, 0.3);
+}
+
+.badge-sin-generar {
+    background: rgba(255, 255, 255, 0.1);
+    color: #888;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Botón de generar comprobante */
+.btn-generate-invoice {
+    background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(106, 27, 154, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-generate-invoice:hover {
+    background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(106, 27, 154, 0.4);
+}
+
+.btn-generate-invoice:disabled {
+    background: #555;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.btn-generate-invoice i {
+    font-size: 1rem;
+}
+
+/* Botón de descarga PDF */
+.btn-download-pdf {
+    background: linear-gradient(135deg, #00acc1 0%, #00838f 100%);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 172, 193, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.btn-download-pdf:hover {
+    background: linear-gradient(135deg, #00bcd4 0%, #00acc1 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 172, 193, 0.4);
+}
+
+.btn-download-pdf i {
+    font-size: 1rem;
+}
+
+/* Columna de comprobante */
+.invoice-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.invoice-number {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-family: 'Courier New', monospace;
+}
+
+/* Loading spinner para generación */
+.invoice-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.invoice-loading i {
+    animation: spin 1s linear infinite;
+}
+
+/* Tooltip de error */
+.invoice-error-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.invoice-error-tooltip:hover::after {
+    content: attr(data-error);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(211, 47, 47, 0.95);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 8px;
+}
