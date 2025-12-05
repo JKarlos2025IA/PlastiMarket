@@ -58,7 +58,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnClearFilters = document.getElementById('btn-clear-filters');
 
     if (dateInput) {
-        dateInput.valueAsDate = new Date();
+        // Use local date string YYYY-MM-DD
+        const now = new Date();
+        const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        dateInput.value = localDate;
     }
 
     // Collection Reference
@@ -771,7 +774,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('edit-documento').value = sale.documento || '';
         document.getElementById('edit-cliente').value = sale.cliente || '';
         document.getElementById('edit-pago').value = sale.pago || 'Efectivo';
-        document.getElementById('edit-fecha').value = sale.fecha || new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        document.getElementById('edit-fecha').value = sale.fecha || localDate;
 
         // Deep copy items
         currentEditItems = sale.items ? JSON.parse(JSON.stringify(sale.items)) : [];
