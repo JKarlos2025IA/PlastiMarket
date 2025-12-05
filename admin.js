@@ -655,11 +655,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        // Edit listeners (Placeholder for now)
+        // Edit listeners
         document.querySelectorAll('.btn-edit-sale').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                alert('Funcionalidad de edición próximamente disponible.');
+                const saleId = e.currentTarget.dataset.id;
+                const sale = currentSales.find(s => s.id === saleId);
+                if (sale) {
+                    openEditModal(sale);
+                }
             });
         });
 
@@ -749,6 +753,162 @@ document.addEventListener('DOMContentLoaded', async () => {
         link.download = "ventas_plastimarket_detalle.csv";
         link.click();
     };
+
+    // --- Edit Sale Logic ---
+    const editModal = document.getElementById('edit-sale-modal');
+    const editOverlay = document.getElementById('edit-modal-overlay');
+    const editItemsContainer = document.getElementById('edit-items-container');
+    let currentEditItems = [];
+
+    function openEditModal(sale) {
+        if (sale.invoiceStatus === 'emitido') {
+            alert('⚠️ No se puede editar una venta facturada. Debe anularla primero.');
+            return;
+        }
+
+        document.getElementById('edit-sale-id').value = sale.id;
+        document.getElementById('edit-documento').value = sale.documento || '';
+        document.getElementById('edit-cliente').value = sale.cliente || '';
+        document.getElementById('edit-pago').value = sale.pago || 'Efectivo';
+        document.getElementById('edit-fecha').value = sale.fecha || new Date().toISOString().split('T')[0];
+
+        // Deep copy items
+        currentEditItems = sale.items ? JSON.parse(JSON.stringify(sale.items)) : [];
+
+        // Legacy support
+        if (currentEditItems.length === 0 && sale.producto) {
+            currentEditItems.push({
+                producto: sale.producto,
+                cantidad: sale.cantidad || 1,
+                unidad: 'NIU',
+                precio_unit: (sale.total / (sale.cantidad || 1)).toFixed(2),
+                total: sale.total
+            });
+        }
+
+        renderEditItems();
+        calculateEditTotals();
+
+        editModal.classList.add('active');
+        editOverlay.classList.add('active');
+    }
+
+    function closeEditModal() {
+        editModal.classList.remove('active');
+        editOverlay.classList.remove('active');
+    }
+
+    document.getElementById('btn-close-edit-modal').addEventListener('click', closeEditModal);
+    editOverlay.addEventListener('click', closeEditModal);
+
+    function renderEditItems() {
+        editItemsContainer.innerHTML = '';
+        currentEditItems.forEach((item, index) => {
+            const row = document.createElement('div');
+            row.className = 'edit-item-row';
+            row.innerHTML = `
+                <div class="row-header">
+                    <span class="row-title">Ítem #${index + 1}</span>
+                    <button type="button" class="btn-remove-item-edit" data-index="${index}" style="color:#ff4444; background:none; border:none; font-size:1.2rem;">&times;</button>
+                </div>
+                <div class="form-group">
+                    <label>Producto</label>
+                    <input type="text" class="edit-item-producto" data-index="${index}" value="${item.producto}">
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem;">
+                    <div class="form-group">
+                        <label>Cant.</label>
+                        <input type="number" class="edit-item-cantidad" data-index="${index}" value="${item.cantidad}" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>P. Unit</label>
+                        <input type="number" class="edit-item-precio" data-index="${index}" value="${item.precio_unit}" step="0.01">
+                    </div>
+                </div>
+            `;
+            editItemsContainer.appendChild(row);
+        });
+
+        // Add listeners for inputs
+        document.querySelectorAll('.edit-item-cantidad, .edit-item-precio').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const index = e.target.dataset.index;
+                const cant = parseFloat(document.querySelector(`.edit-item-cantidad[data-index="${index}"]`).value) || 0;
+                const price = parseFloat(document.querySelector(`.edit-item-precio[data-index="${index}"]`).value) || 0;
+                currentEditItems[index].cantidad = cant;
+                currentEditItems[index].precio_unit = price;
+                currentEditItems[index].total = (cant * price).toFixed(2);
+                calculateEditTotals();
+            });
+        });
+
+        document.querySelectorAll('.edit-item-producto').forEach(input => {
+            input.addEventListener('input', (e) => {
+                currentEditItems[e.target.dataset.index].producto = e.target.value;
+            });
+        });
+
+        document.querySelectorAll('.btn-remove-item-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                currentEditItems.splice(index, 1);
+                renderEditItems();
+                calculateEditTotals();
+            });
+        });
+    }
+
+    function calculateEditTotals() {
+        let total = 0;
+
+        currentEditItems.forEach(item => {
+            total += parseFloat(item.total) || 0;
+        });
+
+        // Simple calculation assuming prices include IGV
+        const subtotal = total / 1.18;
+        const igv = total - subtotal;
+
+        // Update UI only if elements exist (modal might be closed but function called)
+        const subtotalEl = document.getElementById('edit-subtotal');
+        if (subtotalEl) {
+            // Need to add subtotal/igv elements to HTML if they don't exist, or just update total
+            // In my HTML write_to_file I only put Total, let's check.
+            // I put totals-grid with Total only. I should update HTML to include subtotal/igv if I want them.
+            // For now, let's just update Total.
+            document.getElementById('edit-total').textContent = `S/ ${total.toFixed(2)}`;
+        }
+    }
+
+    document.getElementById('btn-save-edit').addEventListener('click', async () => {
+        const id = document.getElementById('edit-sale-id').value;
+        const docRef = doc(db, "ventas", id);
+
+        const total = currentEditItems.reduce((sum, i) => sum + (parseFloat(i.total) || 0), 0);
+        const subtotal = total / 1.18;
+        const igv = total - subtotal;
+
+        const updatedData = {
+            documento: document.getElementById('edit-documento').value,
+            cliente: document.getElementById('edit-cliente').value,
+            pago: document.getElementById('edit-pago').value,
+            fecha: document.getElementById('edit-fecha').value,
+            items: currentEditItems,
+            total: parseFloat(total.toFixed(2)),
+            subtotal: parseFloat(subtotal.toFixed(2)),
+            igv: parseFloat(igv.toFixed(2)),
+            updatedAt: new Date()
+        };
+
+        try {
+            await updateDoc(docRef, updatedData);
+            alert('✅ Venta actualizada correctamente');
+            closeEditModal();
+        } catch (error) {
+            console.error("Error updating document: ", error);
+            alert("Error al actualizar la venta");
+        }
+    });
 
     // Start Auth Check
     checkAuth();

@@ -992,3 +992,73 @@ tr:hover {
         flex-direction: column;
     }
 }
+
+/* ==========================================================================
+   EDIT MODAL & MOBILE FIXES (Added v14)
+   ========================================================================== */
+
+/* Fix Actions Column Mobile - Force Override */
+@media (max-width: 768px) {
+    .table-container td:last-child {
+        border-bottom: none !important;
+        justify-content: center !important;
+        padding-left: 0 !important;
+        margin-top: 0.5rem !important;
+        width: 100% !important;
+        display: flex !important;
+        gap: 15px !important;
+    }
+
+    .table-container td:nth-of-type(8):before {
+        display: none !important;
+        content: none !important;
+    }
+
+    /* Ensure buttons are large enough to tap */
+    .action-buttons-cell .btn-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+}
+
+/* Edit Modal Specific Styles */
+.edit-item-row {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: grid;
+    gap: 0.8rem;
+    border: 1px solid var(--border-color);
+}
+
+.edit-item-row label {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-bottom: 0.2rem;
+    display: block;
+}
+
+.edit-item-row input {
+    width: 100%;
+    padding: 0.6rem;
+    background: #333;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 4px;
+}
+
+.edit-item-row .row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+}
+
+.edit-item-row .row-title {
+    font-weight: bold;
+    color: var(--primary-color);
+}

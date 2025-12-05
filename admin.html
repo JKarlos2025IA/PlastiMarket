@@ -273,8 +273,70 @@
         </div>
     </div>
 
+    <!-- Edit Sale Modal -->
+    <div id="edit-modal-overlay" class="drawer-overlay"></div>
+    <div id="edit-sale-modal" class="side-drawer" style="width: 500px; max-width: 100%;">
+        <div class="drawer-header">
+            <h3><i class="ph ph-pencil-simple"></i> Editar Venta</h3>
+            <button id="btn-close-edit-modal"
+                style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        <div class="drawer-body">
+            <form id="edit-sale-form">
+                <input type="hidden" id="edit-sale-id">
+
+                <div class="card-panel">
+                    <h4 class="panel-title">Datos del Cliente</h4>
+                    <div class="form-group">
+                        <label>Documento (DNI/RUC)</label>
+                        <input type="text" id="edit-documento" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Razón Social / Nombre</label>
+                        <input type="text" id="edit-cliente" required>
+                    </div>
+                </div>
+
+                <div class="card-panel">
+                    <h4 class="panel-title">Detalle de Venta</h4>
+                    <div id="edit-items-container">
+                        <!-- Items injected via JS -->
+                    </div>
+                </div>
+
+                <div class="card-panel">
+                    <h4 class="panel-title">Pago</h4>
+                    <div class="form-group">
+                        <label>Medio de Pago</label>
+                        <select id="edit-pago">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Yape">Yape</option>
+                            <option value="Plin">Plin</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Credito">Crédito</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="edit-fecha" required>
+                    </div>
+                </div>
+
+                <div class="totals-grid">
+                    <span class="totals-label">Total:</span>
+                    <span class="totals-value total-final" id="edit-total">S/ 0.00</span>
+                </div>
+            </form>
+        </div>
+        <div class="drawer-footer">
+            <button type="button" id="btn-save-edit" class="btn-primary btn-large btn-block">
+                <i class="ph ph-floppy-disk"></i> GUARDAR CAMBIOS
+            </button>
+        </div>
+    </div>
+
     <!-- Firebase SDKs are now imported in admin.js -->
-    <script src="admin.js?v=13" type="module"></script>
+    <script src="admin.js?v=14" type="module"></script>
 </body>
 
 </html>
