@@ -1,217 +1,105 @@
 # Plan de Facturación Electrónica - PlastiMarket
 
-## 📋 Información de Cuenta APIsPERU
+## 🚀 ESTADO ACTUAL: IMPLEMENTADO (Nubefact)
 
-### Credenciales Activas
-- **Email**: leonardosilva201984@gmail.com
-- **RUC**: 15606237577 - SILVA GUEDEZ LEONARDO JOSE
-- **Tipo**: Persona Natural con Negocio
-- **Usuario SOL**: DOFESIVA
-- **Plan**: Premium (S/ 25/mes - comprobantes ilimitados)
-
-### Token de API
-```
-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6Imxlb25hcmRvc2lsdmEyMDE5ODRAZ21haWwuY29tIn0.QYhQlE0qurCjc2COCmX3oY3cf3lkFAb2z9A17yr_9pQ
-```
+**Fecha de Implementación**: 2025-12-04
+**Proveedor Seleccionado**: Nubefact (PSE)
+**Método**: Integración Directa Frontend (JSON)
 
 ---
 
-## 🔌 APIs Disponibles
+## 📋 Configuración Activa (Nubefact)
 
-### 1. Consulta RUC
-**Endpoint**: `GET https://dniruc.apisperu.com/api/v1/ruc/{numero}?token={TOKEN}`
+### Credenciales de Prueba
+- **Ruta**: `https://api.nubefact.com/api/v1/75567e96-3652-475d-9656-050478687440`
+- **Token**: `403260d05154432198b839845347250444e99557457f443799650f4439169408`
+- **Formato**: JSON (Estándar UBL 2.1)
 
-**Respuesta**:
+### Archivos de Implementación
+- `invoice-generator.js`: Lógica de construcción del JSON y envío.
+- `nubefact-config.js`: Almacén de credenciales y rutas.
+- `admin.js`: Integración con la UI (botón "Generar Comprobante").
+
+---
+
+## 🔌 APIs Utilizadas
+
+### 1. Consulta RUC/DNI (APIsPERU)
+**Estado**: ✅ ACTIVO
+- **Uso**: Autocompletado de datos del cliente al registrar venta.
+- **Token**: Configurado en `admin.js`.
+
+### 2. Facturación Electrónica (Nubefact)
+**Estado**: ✅ ACTIVO
+- **Endpoint**: `POST /api/v1/{UUID}`
+- **Funcionalidad**:
+  - Generación de Facturas (F001) y Boletas (B001).
+  - Respuesta inmediata con PDF (A4/Ticket) y XML.
+  - Validación de datos obligatorios (Cliente, Items, Totales).
+
+---
+
+## ✅ Historial de Implementación
+
+### Fase 1: Búsqueda RUC/DNI (COMPLETADA)
+- **Fecha**: 2025-12-04
+- **Resultado**: Búsqueda exitosa de RUC (11 dígitos) y DNI (8 dígitos) usando APIsPERU.
+
+### Fase 2: Facturación Electrónica (COMPLETADA)
+- **Fecha**: 2025-12-04
+- **Cambio de Estrategia**: Se optó por Nubefact en lugar de APIsPERU para facturación debido a la facilidad de integración directa sin necesidad de firma digital manual (PSE).
+- **Logros**:
+  - Emisión de comprobantes desde el historial de ventas.
+  - Almacenamiento de `invoiceNumber` y `invoicePdf` en Firestore.
+  - Bloqueo de edición para ventas ya facturadas.
+
+---
+
+## 📅 Próximos Pasos (Optimización)
+
+1. **Impresión Térmica Directa**:
+   - Configurar formato de ticket 80mm para impresoras Bluetooth/USB.
+   
+2. **Envío por WhatsApp**:
+   - Automatizar el envío del enlace del PDF al número del cliente.
+
+3. **Pase a Producción**:
+   - Reemplazar credenciales de prueba de Nubefact por las de producción.
+   - Solicitar pase a producción en portal SUNAT (dar de alta al PSE Nubefact).
+
+---
+
+## 📚 Referencias Técnicas
+
+### Estructura JSON Nubefact (Ejemplo Simplificado)
 ```json
 {
-  "ruc": "string",
-  "razonSocial": "string",
-  "nombreComercial": "string",
-  "telefonos": [],
-  "estado": "string",
-  "condicion": "string",
-  "direccion": "string",
-  "departamento": "string",
-  "provincia": "string",
-  "distrito": "string",
-  "ubigeo": "string",
-  "capital": "string"
-}
-```
-
-### 2. Consulta DNI
-**Endpoint**: `GET https://dniruc.apisperu.com/api/v1/dni/{numero}?token={TOKEN}`
-
-**Respuesta**:
-```json
-{
-  "dni": "string",
-  "nombres": "string",
-  "apellidoPaterno": "string",
-  "apellidoMaterno": "string",
-  "codVerifica": "string"
-}
-```
-
-### 3. Facturación Electrónica (Próximamente)
-**Endpoint**: `POST https://api.apisperu.com/v1/facturacion/generar`
-
-**Documentación completa**: Ver [swagger.json](file:///c:/Users/juan.montenegro/.gemini/antigravity/scratch/plasticos-web/swagger.json)
-
----
-
-## ✅ Implementación Actual
-
-### ✅ Fase 1: Búsqueda RUC/DNI (COMPLETADA)
-
-**Estado**: ✅ **YA IMPLEMENTADO Y FUNCIONANDO**
-- Ubicación: [admin.js](file:///c:/Users/juan.montenegro/.gemini/antigravity/scratch/plasticos-web/admin.js) líneas 131-208
-- Token configurado: ✅
-- Consulta RUC (11 dígitos): ✅
-- Consulta DNI (8 dígitos): ✅
-- Mock DB para demos: ✅
-- UI con spinner de carga: ✅
-
-**Archivo implementado**: [admin.js](file:///c:/Users/juan.montenegro/.gemini/antigravity/scratch/plasticos-web/admin.js)
-
-**Código clave**:
-
-```javascript
-const APISPERU_TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6Imxlb25hcmRvc2lsdmEyMDE5ODRAZ21haWwuY29tIn0.QYhQlE0qurCjc2COCmX3oY3cf3lkFAb2z9A17yr_9pQ';
-
-async function searchRUC() {
-    const docInput = document.getElementById('documento');
-    const clienteInput = document.getElementById('cliente');
-    const numero = docInput.value.trim();
-    
-    if (!numero) {
-        alert('Ingrese un RUC o DNI');
-        return;
+  "operacion": "generar_comprobante",
+  "tipo_de_comprobante": "1",
+  "serie": "F001",
+  "numero": "1",
+  "sunat_transaction": "1",
+  "cliente_tipo_de_documento": "6",
+  "cliente_numero_de_documento": "20600695771",
+  "cliente_denominacion": "EMPRESA X",
+  "items": [
+    {
+      "unidad_de_medida": "NIU",
+      "codigo": "001",
+      "descripcion": "PRODUCTO A",
+      "cantidad": "1",
+      "valor_unitario": "100",
+      "precio_unitario": "118",
+      "subtotal": "100",
+      "tipo_de_igv": "1",
+      "igv": "18",
+      "total": "118"
     }
-    
-    const btn = document.getElementById('btn-search-ruc');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-spinner"></i>';
-    
-    try {
-        if (numero.length === 11) {
-            // Consulta RUC
-            const response = await fetch(
-                `https://dniruc.apisperu.com/api/v1/ruc/${numero}?token=${APISPERU_TOKEN}`
-            );
-            const data = await response.json();
-            
-            if (data.ruc) {
-                clienteInput.value = data.razonSocial || data.nombreComercial;
-            }
-        } else if (numero.length === 8) {
-            // Consulta DNI
-            const response = await fetch(
-                `https://dniruc.apisperu.com/api/v1/dni/${numero}?token=${APISPERU_TOKEN}`
-            );
-            const data = await response.json();
-            
-            if (data.dni) {
-                clienteInput.value = `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`;
-            }
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ph ph-magnifying-glass"></i>';
-    }
+  ]
 }
-
-// Conectar evento
-document.getElementById('btn-search-ruc').addEventListener('click', searchRUC);
 ```
 
 ---
 
----
+**Estado Final**: ✅ SISTEMA DE FACTURACIÓN OPERATIVO
 
-## 📅 Fase 2: Facturación Electrónica (SIGUIENTE PASO)
-
-### Estado Actual
-- ✅ Fase 1 completada (Búsqueda RUC/DNI)
-- ⏳ Fase 2 pendiente de inicio
-
-### Requisitos Previos
-1. ✅ Cuenta APIsPERU (YA TIENES)
-2. ❓ Certificado Digital Tributario (verificar si APIsPERU lo requiere)
-3. ⏳ Configurar Firebase Functions (2-3 días)
-
-### Costo Mensual
-- APIsPERU Premium: **S/ 25** (ya contratado) ✅
-- Firebase Functions: ~S/ 0-10
-- Firebase Storage: ~S/ 0-5
-- **TOTAL: S/ 25-40/mes**
-
-### Cronograma Realista
-
-#### ✅ **Completado**:
-1. ~~Implementar búsqueda RUC/DNI~~ (HECHO)
-
-#### 📋 **Siguiente fase** (1-2 semanas):
-2. **Investigar API de Facturación APIsPERU** (1 día)
-   - Verificar si requiere certificado digital
-   - Revisar documentación de endpoints
-   - Confirmar formato de respuesta (PDF/XML)
-
-3. **Configurar Firebase Functions** (2-3 días)
-   - Crear función para generar comprobantes
-   - Integrar con API de APIsPERU
-   - Configurar variables de entorno
-
-4. **Pruebas en Ambiente BETA** (3-5 días)
-   - Emitir comprobantes de prueba
-   - Validar con SUNAT
-   - Ajustar errores
-
-5. **Migrar a Producción** (1 día)
-   - Cambiar a ambiente productivo
-   - Emitir primeros comprobantes reales
-
-**Total estimado REAL: 1-2 semanas** (no 3-4 semanas como se estimó inicialmente)
-
-> [!NOTE]
-> **El tiempo se redujo** porque:
-> - ✅ Ya tienes cuenta de APIsPERU
-> - ✅ Búsqueda RUC/DNI ya funciona
-> - ❓ Posiblemente APIsPERU no requiera certificado (a verificar)
-
----
-
-## 🔐 Seguridad
-
-> [!CAUTION]
-> **Nunca subir credenciales a Git**: El token de API debe estar en variables de entorno o Firebase Config, NUNCA en el código.
-
-**Variables de entorno recomendadas**:
-```env
-APISPERU_TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
-APISPERU_RUC=15606237577
-SUNAT_USUARIO_SOL=DOFESIVA
-SUNAT_PASSWORD=strangeno
-```
-
----
-
-## 📚 Referencias
-
-- **Documentación API**: [swagger.json](file:///c:/Users/juan.montenegro/.gemini/antigravity/scratch/plasticos-web/swagger.json)
-- **Plan completo**: [implementation_plan.md](file:///C:/Users/juan.montenegro/.gemini/antigravity/brain/0ea6c60d-e1c6-48b1-b307-2ec847260876/implementation_plan.md)
-- **Soporte APIsPERU**: soporte@apisperu.com
-
----
-
-## ✅ Siguiente Acción
-
-**¿Quieres implementar la búsqueda RUC/DNI AHORA?**
-
-Es un cambio rápido (15 minutos) que mejorará inmediatamente la experiencia:
-- ✅ Sin costos adicionales (ya tienes el servicio)
-- ✅ Autocompletado de nombres
-- ✅ Menos errores de tipeo
-- ✅ Datos validados por SUNAT/RENIEC
