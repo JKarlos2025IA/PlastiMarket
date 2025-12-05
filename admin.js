@@ -548,6 +548,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 invoiceBtn = `<button class="btn-icon btn-invoice pendiente btn-generate-invoice" data-id="${sale.id}" title="Generar Comprobante"><i class="ph ph-file-text"></i></button>`;
             }
 
+            // Botón Editar (Nuevo)
+            const editBtn = `<button class="btn-icon btn-edit-sale" data-id="${sale.id}" title="Editar Venta" style="color: #ffca28;"><i class="ph ph-pencil-simple"></i></button>`;
+
             tr.innerHTML = `
                 <td><i class="ph ph-caret-down expand-icon"></i> ${dateStr}</td>
                 <td>${sale.cliente || 'Cliente General'}</td>
@@ -557,9 +560,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td style="font-size: 0.85em; color: #888;">${sale.createdBy || 'N/A'}</td>
                 <td>${invoiceBtn}</td>
                 <td>
-                    <button class="btn-icon btn-delete-sale" data-id="${sale.id}" title="Eliminar">
-                        <i class="ph ph-trash"></i>
-                    </button>
+                    <div class="action-buttons-cell" style="display: flex; gap: 8px; justify-content: center;">
+                        ${editBtn}
+                        <button class="btn-icon btn-delete-sale" data-id="${sale.id}" title="Eliminar">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </div>
                 </td>
             `;
 
@@ -614,7 +620,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Toggle Detail on Click
             tr.addEventListener('click', (e) => {
-                if (e.target.closest('.btn-delete-sale') || e.target.closest('.btn-generate-invoice')) return;
+                if (e.target.closest('.btn-delete-sale') || e.target.closest('.btn-generate-invoice') || e.target.closest('.btn-edit-sale')) return;
 
                 tr.classList.toggle('expanded');
                 const detailRow = document.getElementById(`detail-${sale.id}`);
@@ -646,6 +652,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         alert("Error al eliminar la venta");
                     }
                 }
+            });
+        });
+
+        // Edit listeners (Placeholder for now)
+        document.querySelectorAll('.btn-edit-sale').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                alert('Funcionalidad de edición próximamente disponible.');
             });
         });
 
